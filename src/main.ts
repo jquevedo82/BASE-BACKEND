@@ -1,6 +1,6 @@
 import { ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-//import { configService } from 'src/config/config.service';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 
@@ -11,6 +11,23 @@ async function bootstrap() {
       transform: true,
     }),
   );
+
+  const options = new DocumentBuilder()
+  .setTitle('Neumen REST API')
+  .setDescription('API REST desarrollada en Nestjs Con token JWT')
+  .setVersion('1.0')
+  .addBearerAuth()
+  .build();
+
+  const document = SwaggerModule.createDocument(app, options);
+  // La ruta en que se sirve la documentación
+  SwaggerModule.setup('docs', app, document, {
+    explorer: true,
+    swaggerOptions: {
+      filter: true,
+      showRequestDuration: true,
+    },
+  });
 
   const configService = app.get(ConfigService);
   //server port
