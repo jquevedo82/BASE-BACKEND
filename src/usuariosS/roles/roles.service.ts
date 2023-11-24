@@ -39,4 +39,12 @@ export class RolesService {
     return roles;
   }
 
+
+  update(id: number, updateRoleDto: UpdateRoleDto) {
+    return `This action updates a #${id} role`;
+  }
+
+  remove(id: number) {
+    return `This action removes a #${id} role`;
+  }
 }
