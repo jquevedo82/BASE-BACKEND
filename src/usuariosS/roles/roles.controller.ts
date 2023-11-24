@@ -1,34 +1,91 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  UsePipes,
+  ValidationPipe,
+  HttpStatus,
+  Inject,
+  Req,
+  Res,
+  Query,
+} from '@nestjs/common';
 import { RolesService } from './roles.service';
 import { CreateRoleDto } from './dto/create-role.dto';
 import { UpdateRoleDto } from './dto/update-role.dto';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { Rol } from './entities/rol.entity';
+import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
+import { Logger } from 'winston';
 
+@ApiTags('Rol')
 @Controller('roles')
 export class RolesController {
-  constructor(private readonly rolesService: RolesService) {}
+  constructor(
+    private readonly rolesService: RolesService,
+    @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
+  ) {}
 
   @Post()
-  create(@Body() createRoleDto: CreateRoleDto) {
-    return this.rolesService.create(createRoleDto);
+  @ApiOperation({ summary: 'Muestra el Rol creado' })
+  @ApiResponse({
+    status: 201,
+    description: 'Mensaje del Rol creado',
+    type: Rol,
+  })
+  @UsePipes(new ValidationPipe({ whitelist: true }))
+  async create(
+    @Req() request: Request,
+    @Body() createRoleDto: CreateRoleDto,
+    @Res() res,
+  ) {
+    const data = await this.rolesService.create(createRoleDto);
+    const startTime = Date.now();
+    this.writeLog(startTime, request, HttpStatus.OK);
+
+    return res.status(HttpStatus.OK).json({
+      statusCode: HttpStatus.CREATED,
+      message: 'OK',
+      data: data,
+    });
   }
 
   @Get()
-  findAll() {
-    return this.rolesService.findAll();
+  @ApiOperation({ summary: 'Muestra los Roles creados' })
+  @ApiResponse({
+    status: 200,
+    description: 'Datos de los Roles creados',
+    type: [Rol],
+  })
+  async findAll(
+    @Req() request: Request,
+    @Query() filterQuery,
+    @Res() res,
+  ): Promise<Rol[]> {
+    const startTime = Date.now();
+    this.writeLog(startTime, request, HttpStatus.OK);
+
+    const data = await this.rolesService.findAll(filterQuery);
+    return res.status(HttpStatus.OK).json({
+      statusCode: HttpStatus.OK,
+      message: 'OK',
+      data: data,
+    });
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.rolesService.findOne(+id);
-  }
-
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateRoleDto: UpdateRoleDto) {
-    return this.rolesService.update(+id, updateRoleDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.rolesService.remove(+id);
+  public writeLog(startTime: any, request: any, statusCode: number) {
+    this.logger.log({
+      level: 'info',
+      message: '',
+      statusCode: statusCode,
+      method: request['method'],
+      url: request['url'],
+      user: request['user'],
+      duration: Date.now() - startTime,
+    });
   }
 }

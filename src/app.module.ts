@@ -6,14 +6,25 @@ import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './usuariosS/users/users.module';
 import { configService } from './config/config.service';
+import { RolesModule } from './usuariosS/roles/roles.module';
+import { WinstonModule } from 'nest-winston';
+import { loggerOptions } from './config/winston-logger.config';
+import { APP_FILTER } from '@nestjs/core';
+import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
+
 @Module({
   imports: [
+    WinstonModule.forRoot(loggerOptions),
     ConfigModule.forRoot({ envFilePath: '.env', isGlobal: true }),
     TypeOrmModule.forRoot(configService.getTypeOrmConfig()),
     AuthModule,
     UsersModule,
+    RolesModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    { provide: APP_FILTER, useClass: GlobalExceptionFilter },
+  ],
 })
 export class AppModule {}
