@@ -13,17 +13,29 @@ import {
   Req,
   Res,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import { RolesService } from './roles.service';
 import { CreateRoleDto } from './dto/create-role.dto';
-import { UpdateRoleDto } from './dto/update-role.dto';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+  ApiUnauthorizedResponse,
+} from '@nestjs/swagger';
 import { Rol } from './entities/rol.entity';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import { Logger } from 'winston';
+import { RolDecorator } from 'src/decorador/rol.decorator';
+import { JwtAuthGuard } from 'src/guards/jwt.guards';
+import { RolesGuard } from 'src/guards/rol.guard';
+import { RolNombre } from './entities/rol.enum';
 
 @ApiTags('Rol')
 @Controller('roles')
+@ApiBearerAuth() // para cerrar o abrir con el token en el swagger
+@ApiUnauthorizedResponse({ description: 'Unauthorized Bearer Auth.' })
 export class RolesController {
   constructor(
     private readonly rolesService: RolesService,
@@ -31,6 +43,9 @@ export class RolesController {
   ) {}
 
   @Post()
+   //@UseGuards(JwtAuthGuard)//bloquea todo si no trae un token bearer
+  //@RolDecorator(RolNombre.DEV) //indicamos que tipo usuario puede accesr a este acces point
+  //@UseGuards(JwtAuthGuard, RolesGuard)// autenticacion jwt y que sea el roll antes detallado
   @ApiOperation({ summary: 'Muestra el Rol creado' })
   @ApiResponse({
     status: 201,
@@ -45,16 +60,20 @@ export class RolesController {
   ) {
     const data = await this.rolesService.create(createRoleDto);
     const startTime = Date.now();
-    this.writeLog(startTime, request, HttpStatus.OK);
+    const message = 'OK';
+    this.writeLog(startTime, request, HttpStatus.OK, message);
 
     return res.status(HttpStatus.OK).json({
       statusCode: HttpStatus.CREATED,
-      message: 'OK',
+      message: message,
       data: data,
     });
   }
 
   @Get()
+  //@UseGuards(JwtAuthGuard)//bloquea todo si no trae un token bearer
+  //@RolDecorator(RolNombre.DEV) //indicamos que tipo usuario puede accesr a este acces point
+  //@UseGuards(JwtAuthGuard, RolesGuard)// autenticacion jwt y que sea el roll antes detallado
   @ApiOperation({ summary: 'Muestra los Roles creados' })
   @ApiResponse({
     status: 200,
@@ -67,20 +86,28 @@ export class RolesController {
     @Res() res,
   ): Promise<Rol[]> {
     const startTime = Date.now();
-    this.writeLog(startTime, request, HttpStatus.OK);
 
     const data = await this.rolesService.findAll(filterQuery);
+    const message = 'OK';
+
+    this.writeLog(startTime, request, HttpStatus.OK, message);
+
     return res.status(HttpStatus.OK).json({
       statusCode: HttpStatus.OK,
-      message: 'OK',
+      message: message,
       data: data,
     });
   }
 
-  public writeLog(startTime: any, request: any, statusCode: number) {
+  public writeLog(
+    startTime: any,
+    request: any,
+    statusCode: number,
+    message: string,
+  ) {
     this.logger.log({
       level: 'info',
-      message: '',
+      message: message,
       statusCode: statusCode,
       method: request['method'],
       url: request['url'],

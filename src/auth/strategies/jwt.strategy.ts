@@ -24,12 +24,16 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   async validate(payload: PayLoadInterface) {
+    
    // return { userId: payload.id, username: payload.username };
     const { username, email } = payload;
+    
     const usuario = await this.authRepositoy.findOne({
       where: [{ username: username }, { email: email }],
     });
+   // console.log(usuario);
     if (!usuario)
+          return new UnauthorizedException(('credenciales erroneas'));
     return payload;
   }
 }

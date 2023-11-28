@@ -37,7 +37,7 @@ export class User {
   password: string;
 
   @ApiProperty({ example: 'Descripcion del Usuario del usuario' })
-  @Column({ type: 'varchar', nullable: true })
+  @Column({ type: 'varchar', nullable: false })
   denominacion: string;
 
   @ApiProperty({ example: 'Nivel del Usuario' })

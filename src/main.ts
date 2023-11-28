@@ -3,13 +3,12 @@ import { ConfigService } from '@nestjs/config';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
-import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
-import { Response } from 'express';
-import { Logger } from 'winston';
+
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  // Usar el logger al instanciar GlobalExceptionFilter
+  app.useGlobalFilters();
   app.useGlobalPipes(
     new ValidationPipe({
       transform: true,
@@ -32,8 +31,6 @@ async function bootstrap() {
       showRequestDuration: true,
     },
   });
-  // Registra el filtro de excepciones global
-  app.useGlobalFilters();
 
   const configService = app.get(ConfigService);
   //server port
