@@ -1,3 +1,4 @@
+import { WriteLogService } from './config/writelog.service';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -23,8 +24,10 @@ import { GlobalExceptionFilter } from './common/filters/global-exception.filter'
   ],
   controllers: [AppController],
   providers: [
+    
     AppService,
     { provide: APP_FILTER, useClass: GlobalExceptionFilter },
   ],
+  //exports: [WriteLogService],
 })
 export class AppModule {}

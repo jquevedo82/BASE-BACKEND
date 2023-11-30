@@ -12,7 +12,7 @@ import { IsNotBlank } from 'src/decorador/is-not-blank.decorator';
 export class NuevoUsuarioDto {
   @ApiProperty({ example: 'Nombre Completo del Usuario' })
   @IsString()
-  @MaxLength(20, { message: 'Nombre longitud maxima de 20' })
+  @MaxLength(50, { message: 'Nombre longitud maxima de 50' })
   nombre: string;
 
   @ApiProperty({ example: 'UserName' })
