@@ -9,6 +9,8 @@ import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { JWT_SECRET } from 'src/config/constants';
 import { JwtStrategy } from './strategies/jwt.strategy';
+import { WinstonLogger } from 'nest-winston';
+import { WriteLogService } from 'src/config/writelog.service';
 
 @Module({
   imports: [
@@ -26,7 +28,7 @@ import { JwtStrategy } from './strategies/jwt.strategy';
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, ConfigService, JwtStrategy],
+  providers: [AuthService, ConfigService, JwtStrategy, WriteLogService],
   exports: [PassportModule, JwtModule],
 })
 export class AuthModule {}

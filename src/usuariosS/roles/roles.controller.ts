@@ -31,6 +31,7 @@ import { RolDecorator } from 'src/decorador/rol.decorator';
 import { JwtAuthGuard } from 'src/guards/jwt.guards';
 import { RolesGuard } from 'src/guards/rol.guard';
 import { RolNombre } from './entities/rol.enum';
+import { WriteLogService } from 'src/config/writelog.service';
 
 @ApiTags('Rol')
 @Controller('roles')
@@ -39,7 +40,7 @@ import { RolNombre } from './entities/rol.enum';
 export class RolesController {
   constructor(
     private readonly rolesService: RolesService,
-    @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
+    private readonly writeLog: WriteLogService, //@Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
   ) {}
 
   @Post()
@@ -61,7 +62,7 @@ export class RolesController {
     const data = await this.rolesService.create(createRoleDto);
     const startTime = Date.now();
     const message = 'OK';
-    this.writeLog(startTime, request, HttpStatus.OK, message);
+    this.writeLog.writeLog(startTime, request, HttpStatus.OK, message);
 
     return res.status(HttpStatus.OK).json({
       statusCode: HttpStatus.CREATED,
@@ -90,7 +91,7 @@ export class RolesController {
     const data = await this.rolesService.findAll(filterQuery);
     const message = 'OK';
 
-    this.writeLog(startTime, request, HttpStatus.OK, message);
+    this.writeLog.writeLog(startTime, request, HttpStatus.OK, message);
 
     return res.status(HttpStatus.OK).json({
       statusCode: HttpStatus.OK,
@@ -99,20 +100,5 @@ export class RolesController {
     });
   }
 
-  public writeLog(
-    startTime: any,
-    request: any,
-    statusCode: number,
-    message: string,
-  ) {
-    this.logger.log({
-      level: 'info',
-      message: message,
-      statusCode: statusCode,
-      method: request['method'],
-      url: request['url'],
-      user: request['user'],
-      duration: Date.now() - startTime,
-    });
-  }
+
 }

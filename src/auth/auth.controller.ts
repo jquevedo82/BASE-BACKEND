@@ -24,6 +24,7 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
+import { WriteLogService } from 'src/config/writelog.service';
 import { RolDecorator } from 'src/decorador/rol.decorator';
 import { JwtAuthGuard } from 'src/guards/jwt.guards';
 import { RolesGuard } from 'src/guards/rol.guard';
@@ -40,10 +41,10 @@ import { TokenDto } from './dto/token.dto';
 export class AuthController {
   constructor(
     private readonly authService: AuthService,
-    @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
+    private readonly writeLog: WriteLogService, //@Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
   ) {}
 
-  @UseGuards(JwtAuthGuard)//bloquea todo si no trae un token bearer
+  @UseGuards(JwtAuthGuard) //bloquea todo si no trae un token bearer
   //@RolDecorator(RolNombre.DEV) //indicamos que tipo usuario puede accesr a este acces point
   //@UseGuards(JwtAuthGuard, RolesGuard)// autenticacion jwt y que sea el roll antes detallado
   @Get()
@@ -59,7 +60,7 @@ export class AuthController {
     @Res() res,
   ): Promise<User[]> {
     const startTime = Date.now();
-    this.writeLog(startTime, request, HttpStatus.OK);
+    this.writeLog.writeLog(startTime, request, HttpStatus.OK, '');
 
     const data = await this.authService.findAll(filterQuery);
     return res.status(HttpStatus.OK).json({
@@ -86,7 +87,7 @@ export class AuthController {
     @Res() res,
   ): Promise<TokenDto> {
     const startTime = Date.now();
-    this.writeLog(startTime, request, HttpStatus.OK);
+    this.writeLog.writeLog(startTime, request, HttpStatus.OK, '');
 
     const data = await this.authService.login(dto);
     return res.status(HttpStatus.OK).json({
@@ -112,7 +113,7 @@ export class AuthController {
     @Res() res,
   ): Promise<TokenDto> {
     const startTime = Date.now();
-    this.writeLog(startTime, request, HttpStatus.OK);
+    this.writeLog.writeLog(startTime, request, HttpStatus.OK, '');
     const data = await this.authService.refresh(dto);
     return res.status(HttpStatus.OK).json({
       statusCode: HttpStatus.OK,
@@ -138,8 +139,8 @@ export class AuthController {
     @Res() res,
   ): Promise<any> {
     const startTime = Date.now();
-   // console.log(dto);
-    this.writeLog(startTime, request, HttpStatus.OK);
+    // console.log(dto);
+    this.writeLog.writeLog(startTime, request, HttpStatus.OK, '');
     const data = await this.authService.createDev(dto);
     return res.status(HttpStatus.OK).json({
       statusCode: HttpStatus.OK,
@@ -165,8 +166,8 @@ export class AuthController {
     @Res() res,
   ): Promise<any> {
     const startTime = Date.now();
-   // console.log(dto);
-    this.writeLog(startTime, request, HttpStatus.OK);
+    // console.log(dto);
+    this.writeLog.writeLog(startTime, request, HttpStatus.OK, '');
     const data = await this.authService.createSuper(dto);
     return res.status(HttpStatus.OK).json({
       statusCode: HttpStatus.OK,
@@ -192,8 +193,8 @@ export class AuthController {
     @Res() res,
   ): Promise<any> {
     const startTime = Date.now();
-  //  console.log(dto);
-    this.writeLog(startTime, request, HttpStatus.OK);
+    //  console.log(dto);
+    this.writeLog.writeLog(startTime, request, HttpStatus.OK, '');
     const data = await this.authService.createAdmin(dto);
     return res.status(HttpStatus.OK).json({
       statusCode: HttpStatus.OK,
@@ -218,8 +219,8 @@ export class AuthController {
     @Res() res,
   ): Promise<any> {
     const startTime = Date.now();
-   // console.log(dto);
-    this.writeLog(startTime, request, HttpStatus.OK);
+    // console.log(dto);
+    this.writeLog.writeLog(startTime, request, HttpStatus.OK, '');
     const data = await this.authService.createUser(dto);
     return res.status(HttpStatus.OK).json({
       statusCode: HttpStatus.OK,
@@ -227,15 +228,5 @@ export class AuthController {
       data: data,
     });
   }
-  public writeLog(startTime: any, request: any, statusCode: number) {
-    this.logger.log({
-      level: 'info',
-      message: '',
-      statusCode: statusCode,
-      method: request['method'],
-      url: request['url'],
-      user: request['user'],
-      duration: Date.now() - startTime,
-    });
-  }
+
 }
