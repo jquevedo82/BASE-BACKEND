@@ -72,12 +72,17 @@ export class UsersService {
     codigoId: number,
     updateUsuarioDto: UpdateUserDto,
   ): Promise<any> {
+    // puedo seleccionar de updateUsuarioDto los atributos q solo quiero actualizar
+    // const newU: UpdateUserDto = { nivel: 2, denominacion: 'Prueba' };
+    console.log(updateUsuarioDto);
+    if (Object.keys(updateUsuarioDto).length === 0)
+      throw new ConflictException('No actuliza ningun dato');
+
     const toUpdate = await this.userRepository.findOne({
       where: { id: codigoId },
     });
 
-    if (!toUpdate)
-      throw new ConflictException('El rol que ingresaste ya existe');
+    if (!toUpdate) throw new ConflictException('User no encontrado');
 
     const updated = Object.assign(toUpdate, updateUsuarioDto);
 
@@ -87,16 +92,22 @@ export class UsersService {
     return updateU;
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} user`;
+  async remove(usuarioId: number): Promise<any> {
+    const usuario = await this.userRepository.findOne({
+      where: { id: usuarioId },
+    });
+    if (!usuario) throw new ConflictException('EL Usuario No existe');
+
+    const remove = await this.userRepository.remove(usuario);
+    return remove;
   }
+
   async remove2(usuarioId: number): Promise<any> {
     const usuario = await this.userRepository.findOne({
       where: { id: usuarioId },
     });
-    if (!usuario) {
-      throw new ConflictException('EL Usuario No existe');
-    }
+    if (!usuario) throw new ConflictException('EL Usuario No existe');
+
     usuario.isActivo = false;
     const disabled = await this.userRepository.save(usuario);
     return disabled;

@@ -34,8 +34,7 @@ import { JwtAuthGuard } from 'src/guards/jwt.guards';
 import { RolesGuard } from 'src/guards/rol.guard';
 import { User } from './entities/user.entity';
 import { Request } from 'express';
-import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
-import { Logger } from 'winston';
+
 import { WriteLogService } from 'src/config/writelog.service';
 
 @ApiTags('Users')
@@ -75,7 +74,7 @@ export class UsersController {
     });
   }
   @Get()
-  //@UseGuards(JwtAuthGuard)//bloquea todo si no trae un token bearer
+  @UseGuards(JwtAuthGuard)//bloquea todo si no trae un token bearer
   //@RolDecorator(RolNombre.DEV) //indicamos que tipo usuario puede accesr a este acces point
   //  @UseGuards(JwtAuthGuard, RolesGuard) // autenticacion jwt y que sea el roll antes detallado
   @ApiOperation({ summary: 'Consultar Listado de Usuarios del Sistemas' })
@@ -153,6 +152,7 @@ export class UsersController {
     });
   }
 
+ // @UsePipes(new ValidationPipe({ whitelist: true })) //limpia los que no tiene validacion en el dto
   @RolDecorator(RolNombre.ADMIN)
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Patch(':id')
@@ -186,7 +186,7 @@ export class UsersController {
 
   @RolDecorator(RolNombre.ADMIN)
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Delete('id')
+  @Delete(':id')
   @ApiOperation({ summary: 'Eliminar un Usuario específico' })
   @ApiResponse({
     status: 200,
@@ -195,11 +195,28 @@ export class UsersController {
   })
   @ApiForbiddenResponse({ description: 'Forbidden..' })
   //remove(@Param('id', ParseIntPipe) id: number): Promise<Cliente> {
-  remove(
+  async remove(
     //@Param('entidad', ParseIntPipe) entidad: number,
-    @Param('id') codigoId: number,
+    @Req() request: Request,
+    @Param('id', ParseIntPipe) codigoId: number,
+    @Res() res,
   ): Promise<User> {
     //console.log("codigoId: ", codigoId);
-    return this.usersService.remove2(codigoId);
+
+    const startTime = Date.now();
+
+    const data = await this.usersService.remove2(codigoId);
+    const message = 'Elemento Eliminado Logicamente';
+
+    // const data = await this.usersService.remove(codigoId);
+    // const message = 'Elemento Eliminado Totalmente';
+
+    this.writeLog.writeLog(startTime, '', HttpStatus.OK, message);
+
+    return res.status(HttpStatus.OK).json({
+      statusCode: HttpStatus.OK,
+      message: message,
+      data: data,
+    });
   }
 }
