@@ -3,7 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-
+import { CorsOptions } from 'cors';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -21,6 +21,15 @@ async function bootstrap() {
     .setVersion('1.0')
     .addBearerAuth()
     .build();
+
+  // Configuración CORS
+  const corsOptions: CorsOptions = {
+    origin: '*', // Cambia esto con la URL de tu frontend
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+   // credentials: true,
+  };
+
+  app.enableCors(corsOptions);
 
   const document = SwaggerModule.createDocument(app, options);
   // La ruta en que se sirve la documentación
