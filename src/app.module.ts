@@ -1,3 +1,4 @@
+import { MsSqlConnectService } from './config/mssqlconnect.service';
 import { WriteLogService } from './config/writelog.service';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
@@ -24,9 +25,9 @@ import { GlobalExceptionFilter } from './common/filters/global-exception.filter'
   ],
   controllers: [AppController],
   providers: [
-    
     AppService,
     { provide: APP_FILTER, useClass: GlobalExceptionFilter },
+    MsSqlConnectService,
   ],
   //exports: [WriteLogService],
 })

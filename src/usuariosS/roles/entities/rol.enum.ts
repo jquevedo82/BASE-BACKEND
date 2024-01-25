@@ -1,7 +1,7 @@
 /* eslint-disable prettier/prettier */
 
 export enum RolNombre {
-  USER = 'User',
+  USER = 'Users',
   ADMIN = 'Admin',
   SUPER = 'Super',
   DEV = 'Dev',

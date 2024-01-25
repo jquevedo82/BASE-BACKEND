@@ -8,6 +8,7 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { compare } from 'bcryptjs';
+import { MsSqlConnectService } from 'src/config/mssqlconnect.service';
 import { Rol } from 'src/usuariosS/roles/entities/rol.entity';
 import { RolNombre } from 'src/usuariosS/roles/entities/rol.enum';
 import { User } from 'src/usuariosS/users/entities/user.entity';
@@ -25,14 +26,31 @@ export class AuthService {
     @InjectRepository(User)
     private readonly authRepository: Repository<User>,
     private readonly jwtService: JwtService,
+    private readonly sql: MsSqlConnectService,
   ) {}
 
   async findAll(filterQuery): Promise<User[]> {
     const { limit } = filterQuery;
-    const usuarios = await this.authRepository.find({
-      take: limit,
-    });
-    return usuarios;
+    const topClause = limit ? `TOP ${limit}` : '';
+    const query = `
+        SELECT ${topClause} *
+        FROM NeumenApi.dbo.usuarios
+    `;
+
+    // Obtener conexión del pool
+    const pool = await this.sql.getConnection();
+
+    try {
+      // Ejecutar la consulta
+      const result = await pool.request().query(query);
+
+      // Devolver el conjunto de registros
+      return result.recordset;
+    } finally {
+      // Importante: liberar la conexión de nuevo al pool en la cláusula finally
+      pool.close();
+    }
+    //return usuarios;
   }
 
   async createDev(dto: NuevoUsuarioDto): Promise<any> {

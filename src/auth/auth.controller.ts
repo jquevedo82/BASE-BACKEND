@@ -45,8 +45,8 @@ export class AuthController {
   ) {}
 
   //@UseGuards(JwtAuthGuard) //bloquea todo si no trae un token bearer
-  @RolDecorator(RolNombre.DEV) //indicamos que tipo usuario puede accesr a este acces point
-  @UseGuards(JwtAuthGuard, RolesGuard)// autenticacion jwt y que sea el roll antes detallado
+  //@RolDecorator(RolNombre.DEV) //indicamos que tipo usuario puede accesr a este acces point
+  //@UseGuards(JwtAuthGuard, RolesGuard)// autenticacion jwt y que sea el roll antes detallado
   @Get()
   @ApiOperation({ summary: 'Lista  Los Usuario Del sistema' })
   @ApiResponse({

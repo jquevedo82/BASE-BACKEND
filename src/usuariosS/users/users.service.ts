@@ -5,6 +5,7 @@ import {
   InternalServerErrorException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { MsSqlConnectService } from 'src/config/mssqlconnect.service';
 import { Repository } from 'typeorm';
 import { Rol } from '../roles/entities/rol.entity';
 import { RolNombre } from '../roles/entities/rol.enum';
@@ -17,26 +18,79 @@ export class UsersService {
   constructor(
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
-    @InjectRepository(Rol)
-    private readonly rolesRepository: Repository<Rol>,
+    //@InjectRepository(Rol)
+    //private readonly rolesRepository: Repository<Rol>,
+    private readonly sql: MsSqlConnectService,
   ) {}
 
   async create(dto: CreateUserDto): Promise<any> {
     const { username, email } = dto;
-    const exists = await this.userRepository.findOne({
-      where: [{ username: username }, { email: email }],
-    });
-    if (exists) throw new ConflictException('El rol que ingresaste ya existe');
+    const whereClause =
+      username && email ? `username = ${username} and email = ${email}` : '';
+    var query = `
+        SELECT *
+        FROM NeumenApi.dbo.roles ${whereClause}
+    `;
+    var result;
+    // Obtener conexión del pool
+    const pool = await this.sql.getConnection();
+    try {
+      // Ejecutar la consulta
+      result = await pool.request().query(query);
+      if (result.recordset.length == 1)
+        throw new ConflictException('El rol que ingresaste ya existe');
 
-    const rolUser = await this.rolesRepository.findOne({
-      where: [{ rolNombre: RolNombre.USER }],
-    });
-    if (!rolUser)
-      throw new BadRequestException('los roles no han sido creados');
-    const user = this.userRepository.create(dto);
-    user.roles = [rolUser];
-    const newU = await this.userRepository.save(user);
-    return newU;
+      query = `
+      SELECT *
+      FROM NeumenApi.dbo.roles
+      WHERE rolNombre = @rolNombre
+  `;
+
+      // Ejecutar la consulta con un parámetro
+      result = await pool
+        .request()
+        .input('rolNombre', RolNombre.USER)
+        .query(query);
+
+      if (result.recordset.length == 0)
+        throw new BadRequestException('los roles no han sido creados');
+
+     const user = {
+        // Asegúrate de asignar las propiedades correctas según tu modelo de usuario
+        username: dto.username,
+        roles: [result.recordset],
+        email: dto.email,
+        nombre: dto.nombre,
+        password: dto.password,
+        denominacion: dto.denominacion,
+        isActivo: dto.isActivo,
+        nivel: dto.nivel,
+
+        // ... otras propiedades del usuario
+      };
+
+
+      const insertQuery = `
+      INSERT INTO NeumenApi.dbo.roles (rolNombre, otrasColumnas)
+      VALUES (@rolNombre, @otrasColumnas)
+  `;
+  const nuevo=await pool
+      .request()
+      .input('nombre',user.nombre)
+      .input('username',user.username)
+      .input('email',user.email)
+      .input('password',user.password)
+      .input('denominacion',user.denominacion)
+      .input('nivel',user.nivel)
+      .input('isActivo',user.isActivo)
+      .input('id_Rol', user.roles)
+      .query(insertQuery);
+      return nuevo;
+
+    } finally {
+      // Importante: liberar la conexión de nuevo al pool en la cláusula finally
+      pool.close();
+    }
   }
 
   async findAll(filterQuery): Promise<User[]> {

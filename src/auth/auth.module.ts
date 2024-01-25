@@ -11,6 +11,7 @@ import { JWT_SECRET } from 'src/config/constants';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { WinstonLogger } from 'nest-winston';
 import { WriteLogService } from 'src/config/writelog.service';
+import { MsSqlConnectService } from 'src/config/mssqlconnect.service';
 
 @Module({
   imports: [
@@ -28,7 +29,13 @@ import { WriteLogService } from 'src/config/writelog.service';
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, ConfigService, JwtStrategy, WriteLogService],
+  providers: [
+    AuthService,
+    ConfigService,
+    JwtStrategy,
+    WriteLogService,
+    MsSqlConnectService,
+  ],
   exports: [PassportModule, JwtModule],
 })
 export class AuthModule {}
