@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { IsBoolean } from 'class-validator';
 import {
   IsEmail,
   IsInt,
@@ -38,7 +39,11 @@ export class NuevoUsuarioDto {
   })
   nivel: number;
 
-
   @ApiProperty({ example: 'true' })
+  @IsBoolean({
+    message: 'el usuario debe estar activo',
+  })
   isActivo: boolean;
+
+
 }

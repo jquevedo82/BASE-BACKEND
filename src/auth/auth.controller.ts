@@ -45,8 +45,8 @@ export class AuthController {
   ) {}
 
   //@UseGuards(JwtAuthGuard) //bloquea todo si no trae un token bearer
-  //@RolDecorator(RolNombre.DEV) //indicamos que tipo usuario puede accesr a este acces point
-  //@UseGuards(JwtAuthGuard, RolesGuard)// autenticacion jwt y que sea el roll antes detallado
+  @RolDecorator(RolNombre.USER) //indicamos que tipo usuario puede accesr a este acces point
+  @UseGuards(JwtAuthGuard, RolesGuard)// autenticacion jwt y que sea el roll antes detallado
   @Get()
   @ApiOperation({ summary: 'Lista  Los Usuario Del sistema' })
   @ApiResponse({
@@ -205,8 +205,8 @@ export class AuthController {
   @UsePipes(new ValidationPipe({ whitelist: true }))
   @Post('user')
   //@UseGuards(JwtAuthGuard)//bloquea todo si no trae un token bearer
-  @RolDecorator(RolNombre.DEV, RolNombre.SUPER, RolNombre.ADMIN) //indicamos que tipo usuario puede accesr a este acces point
-  @UseGuards(JwtAuthGuard, RolesGuard) // autenticacion jwt y que sea el roll antes detallado
+  //@RolDecorator(RolNombre.DEV, RolNombre.SUPER, RolNombre.ADMIN) //indicamos que tipo usuario puede accesr a este acces point
+  //@UseGuards(JwtAuthGuard, RolesGuard) // autenticacion jwt y que sea el roll antes detallado
   @ApiOperation({ summary: 'Crear un Usuario Nuevo' })
   @ApiResponse({
     status: 201,
@@ -219,8 +219,9 @@ export class AuthController {
     @Res() res,
   ): Promise<any> {
     const startTime = Date.now();
-    // console.log(dto);
+     
     this.writeLog.writeLog(startTime, request, HttpStatus.OK, '');
+    
     const data = await this.authService.createUser(dto);
     return res.status(HttpStatus.OK).json({
       statusCode: HttpStatus.OK,

@@ -74,7 +74,7 @@ export class UsersController {
     });
   }
   @Get()
-  @UseGuards(JwtAuthGuard)//bloquea todo si no trae un token bearer
+  //@UseGuards(JwtAuthGuard)//bloquea todo si no trae un token bearer
   //@RolDecorator(RolNombre.DEV) //indicamos que tipo usuario puede accesr a este acces point
   //  @UseGuards(JwtAuthGuard, RolesGuard) // autenticacion jwt y que sea el roll antes detallado
   @ApiOperation({ summary: 'Consultar Listado de Usuarios del Sistemas' })

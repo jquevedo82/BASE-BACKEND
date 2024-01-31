@@ -7,12 +7,11 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
-import { compare } from 'bcryptjs';
+import { compare, hash } from 'bcryptjs';
+import { Transaction } from 'mssql';
 import { MsSqlConnectService } from 'src/config/mssqlconnect.service';
-import { Rol } from 'src/usuariosS/roles/entities/rol.entity';
 import { RolNombre } from 'src/usuariosS/roles/entities/rol.enum';
 import { User } from 'src/usuariosS/users/entities/user.entity';
-import { Repository } from 'typeorm';
 import { LoginUsuarioDto } from './dto/login.dto';
 import { NuevoUsuarioDto } from './dto/nuevo-usuario.dto';
 import { TokenDto } from './dto/token.dto';
@@ -21,10 +20,6 @@ import { PayLoadInterface } from './payload.interface';
 @Injectable()
 export class AuthService {
   constructor(
-    @InjectRepository(Rol)
-    private readonly rolRepository: Repository<Rol>,
-    @InjectRepository(User)
-    private readonly authRepository: Repository<User>,
     private readonly jwtService: JwtService,
     private readonly sql: MsSqlConnectService,
   ) {}
@@ -55,105 +50,406 @@ export class AuthService {
 
   async createDev(dto: NuevoUsuarioDto): Promise<any> {
     const { username, email } = dto;
-    const exists = await this.authRepository.findOne({
-      where: [{ username: username }, { email: email }],
-    });
-    if (exists)
-      throw new BadRequestException('El usuario que ingresaste ya existe');
-    const rolAdmin = await this.rolRepository.findOne({
-      where: [{ rolNombre: RolNombre.ADMIN }],
-    });
-    const rolUser = await this.rolRepository.findOne({
-      where: [{ rolNombre: RolNombre.USER }],
-    });
-    const rolSuper = await this.rolRepository.findOne({
-      where: [{ rolNombre: RolNombre.SUPER }],
-    });
-    const rolDev = await this.rolRepository.findOne({
-      where: [{ rolNombre: RolNombre.DEV }],
-    });
-    if (!rolUser || !rolAdmin || !rolSuper || !rolDev)
-      throw new InternalServerErrorException('los roles no han sido creados');
 
-    const dev = this.authRepository.create(dto);
-    dev.roles = [rolUser, rolAdmin, rolDev, rolSuper];
-    const nuevo = this.authRepository.save(dev);
+    const whereClause =
+      username && email
+        ? ` where username = '${username}' and email = '${email}'`
+        : '';
+    var query = `
+        SELECT *
+        FROM NeumenApi.dbo.usuarios ${whereClause}
+    `;
+    var result;
 
-    return nuevo;
+    // Obtener conexión del pool
+    const pool = await this.sql.getConnection();
+
+    const transaction = new Transaction(pool);
+    try {
+      await transaction.begin();
+      // Ejecutar la consulta
+      //const request = pool.request();
+      const request = transaction.request();
+      // Ejecutar la consulta
+      result = await request.query(query);
+
+      if (result.recordset.length == 1)
+        throw new BadRequestException('El usuario que ingresaste ya existe');
+
+      query = `
+      SELECT *
+      FROM NeumenApi.dbo.roles
+      WHERE rolNombre = @rolNombre or rolNombre = @rolNombre2 or rolNombre = @rolNombre3 or rolNombre = @rolNombre4
+  `;
+      // Ejecutar la consulta con un parámetro
+      result = await request
+        .input('rolNombre', RolNombre.USER)
+        .input('rolNombre2', RolNombre.ADMIN)
+        .input('rolNombre3', RolNombre.SUPER)
+        .input('rolNombre4', RolNombre.DEV)
+        .query(query);
+      console.log(result);
+      if (result.rowsAffected[0] != 4) {
+        throw new BadRequestException('los roles no han sido creados');
+      }
+
+      const hashedPassword = await hash(dto.password, 10);
+      const user = {
+        // Asegúrate de asignar las propiedades correctas según tu modelo de usuario
+        username: dto.username,
+
+        email: dto.email,
+        nombre: dto.nombre,
+        password: hashedPassword,
+        denominacion: dto.denominacion,
+        isActivo: true,
+        nivel: dto.nivel,
+
+        // ... otras propiedades del usuario
+      };
+
+      const insertQuery = `
+      INSERT INTO NeumenApi.dbo.usuarios (nombre,username,email,password,denominacion,nivel,isActivo)
+      VALUES (@nombre,@username,@email,@password,@denominacion,@nivel,@isActivo)
+  `;
+      const nuevo = await request
+
+        .input('nombre', user.nombre)
+        .input('username', user.username)
+        .input('email', user.email)
+        .input('password', user.password)
+        .input('denominacion', user.denominacion)
+        .input('nivel', user.nivel)
+        .input('isActivo', user.isActivo)
+        .query(insertQuery);
+      const resultx = await request.query(
+        'SELECT MAX(id) AS id FROM NeumenApi.dbo.usuarios',
+      );
+      const ID_Usuario = resultx.recordset[0].id;
+
+      for (const idRol of result.recordset) {
+        const request = transaction.request();
+        const insertQuery2 = `INSERT INTO NeumenApi.dbo.roles_usuarios (id_Rol, id_Usuario)
+        VALUES (@id_Rol, @id_Usuario)  `;
+        await request
+          .input('id_Rol', idRol.id)
+          .input('id_Usuario', ID_Usuario)
+          .query(insertQuery2);
+      }
+
+      await transaction.commit();
+      console.log(nuevo);
+      return nuevo;
+    } catch (error) {
+      console.log('object');
+      //console.error('Error al crear usuario:', error);
+      await transaction.rollback();
+      throw error;
+    } finally {
+      // Importante: liberar la conexión de nuevo al pool en la cláusula finally
+      pool.close();
+    }
   }
 
   async createSuper(dto: NuevoUsuarioDto): Promise<any> {
     const { username, email } = dto;
-    const exists = await this.authRepository.findOne({
-      where: [{ username: username }, { email: email }],
-    });
-    if (exists)
-      throw new BadRequestException('El usuario que ingresaste ya existe');
-    const rolAdmin = await this.rolRepository.findOne({
-      where: [{ rolNombre: RolNombre.ADMIN }],
-    });
-    const rolUser = await this.rolRepository.findOne({
-      where: [{ rolNombre: RolNombre.USER }],
-    });
-    const rolSuper = await this.rolRepository.findOne({
-      where: [{ rolNombre: RolNombre.SUPER }],
-    });
-    if (!rolUser || !rolAdmin || !rolSuper)
-      throw new InternalServerErrorException('los roles no han sido creados');
 
-    const sup = this.authRepository.create(dto);
-    sup.roles = [rolUser, rolAdmin, rolSuper];
-    const nuevo = this.authRepository.save(sup);
+    const whereClause =
+      username && email
+        ? ` where username = '${username}' and email = '${email}'`
+        : '';
+    var query = `
+        SELECT *
+        FROM NeumenApi.dbo.usuarios ${whereClause}
+    `;
+    var result;
 
-    return nuevo;
+    // Obtener conexión del pool
+    const pool = await this.sql.getConnection();
+
+    const transaction = new Transaction(pool);
+    try {
+      await transaction.begin();
+      // Ejecutar la consulta
+      //const request = pool.request();
+      const request = transaction.request();
+      // Ejecutar la consulta
+      result = await request.query(query);
+
+      if (result.recordset.length == 1)
+        throw new BadRequestException('El usuario que ingresaste ya existe');
+
+      query = `
+      SELECT *
+      FROM NeumenApi.dbo.roles
+      WHERE rolNombre = @rolNombre or rolNombre = @rolNombre2 or rolNombre = @rolNombre3
+  `;
+      // Ejecutar la consulta con un parámetro
+      result = await request
+        .input('rolNombre', RolNombre.USER)
+        .input('rolNombre2', RolNombre.ADMIN)
+        .input('rolNombre3', RolNombre.SUPER)
+        .query(query);
+
+      if (result.rowsAffected[0] != 3) {
+        throw new BadRequestException('los roles no han sido creados');
+      }
+
+      const hashedPassword = await hash(dto.password, 10);
+      const user = {
+        // Asegúrate de asignar las propiedades correctas según tu modelo de usuario
+        username: dto.username,
+
+        email: dto.email,
+        nombre: dto.nombre,
+        password: hashedPassword,
+        denominacion: dto.denominacion,
+        isActivo: true,
+        nivel: dto.nivel,
+
+        // ... otras propiedades del usuario
+      };
+
+      const insertQuery = `
+      INSERT INTO NeumenApi.dbo.usuarios (nombre,username,email,password,denominacion,nivel,isActivo)
+      VALUES (@nombre,@username,@email,@password,@denominacion,@nivel,@isActivo)
+  `;
+      const nuevo = await request
+
+        .input('nombre', user.nombre)
+        .input('username', user.username)
+        .input('email', user.email)
+        .input('password', user.password)
+        .input('denominacion', user.denominacion)
+        .input('nivel', user.nivel)
+        .input('isActivo', user.isActivo)
+        .query(insertQuery);
+      const resultx = await request.query(
+        'SELECT MAX(id) AS id FROM NeumenApi.dbo.usuarios',
+      );
+      const ID_Usuario = resultx.recordset[0].id;
+
+      for (const idRol of result.recordset) {
+        const request = transaction.request();
+        const insertQuery2 = `INSERT INTO NeumenApi.dbo.roles_usuarios (id_Rol, id_Usuario)
+        VALUES (@id_Rol, @id_Usuario)  `;
+        await request
+          .input('id_Rol', idRol.id)
+          .input('id_Usuario', ID_Usuario)
+          .query(insertQuery2);
+      }
+
+      await transaction.commit();
+
+      return nuevo;
+    } catch (error) {
+      console.log('object');
+      //console.error('Error al crear usuario:', error);
+      await transaction.rollback();
+      throw error;
+    } finally {
+      // Importante: liberar la conexión de nuevo al pool en la cláusula finally
+      pool.close();
+    }
   }
 
   async createAdmin(dto: NuevoUsuarioDto): Promise<any> {
     const { username, email } = dto;
-    const exists = await this.authRepository.findOne({
-      where: [{ username: username }, { email: email }],
-    });
-    if (exists)
-      throw new BadRequestException('El usuario que ingresaste ya existe');
-    const rolAdmin = await this.rolRepository.findOne({
-      where: [{ rolNombre: RolNombre.ADMIN }],
-    });
-    const rolUser = await this.rolRepository.findOne({
-      where: [{ rolNombre: RolNombre.USER }],
-    });
 
-    if (!rolUser || !rolAdmin)
-      throw new InternalServerErrorException('los roles no han sido creados');
+    const whereClause =
+      username && email
+        ? ` where username = '${username}' and email = '${email}'`
+        : '';
+    var query = `
+        SELECT *
+        FROM NeumenApi.dbo.usuarios ${whereClause}
+    `;
+    var result;
 
-    const admin = this.authRepository.create(dto);
-    admin.roles = [rolUser, rolAdmin];
-    const nuevo = this.authRepository.save(admin);
+    // Obtener conexión del pool
+    const pool = await this.sql.getConnection();
 
-    return nuevo;
+    const transaction = new Transaction(pool);
+    try {
+      await transaction.begin();
+      // Ejecutar la consulta
+      //const request = pool.request();
+      const request = transaction.request();
+      // Ejecutar la consulta
+      result = await request.query(query);
+
+      if (result.recordset.length == 1)
+        throw new BadRequestException('El usuario que ingresaste ya existe');
+
+      query = `
+      SELECT *
+      FROM NeumenApi.dbo.roles
+      WHERE rolNombre = @rolNombre or rolNombre = @rolNombre2
+  `;
+      // Ejecutar la consulta con un parámetro
+      result = await request
+        .input('rolNombre', RolNombre.USER)
+        .input('rolNombre2', RolNombre.ADMIN)
+        .query(query);
+
+      if (result.rowsAffected[0] != 2) {
+        throw new BadRequestException('los roles no han sido creados');
+      }
+      const hashedPassword = await hash(dto.password, 10);
+      const user = {
+        // Asegúrate de asignar las propiedades correctas según tu modelo de usuario
+        username: dto.username,
+
+        email: dto.email,
+        nombre: dto.nombre,
+        password: hashedPassword,
+        denominacion: dto.denominacion,
+        isActivo: true,
+        nivel: dto.nivel,
+
+        // ... otras propiedades del usuario
+      };
+
+      const insertQuery = `
+      INSERT INTO NeumenApi.dbo.usuarios (nombre,username,email,password,denominacion,nivel,isActivo)
+      VALUES (@nombre,@username,@email,@password,@denominacion,@nivel,@isActivo)
+  `;
+
+      const nuevo = await request
+
+        .input('nombre', user.nombre)
+        .input('username', user.username)
+        .input('email', user.email)
+        .input('password', user.password)
+        .input('denominacion', user.denominacion)
+        .input('nivel', user.nivel)
+        .input('isActivo', user.isActivo)
+        .query(insertQuery);
+      const resultx = await request.query(
+        'SELECT MAX(id) AS id FROM NeumenApi.dbo.usuarios',
+      );
+      const ID_Usuario = resultx.recordset[0].id;
+
+      for (const idRol of result.recordset) {
+        const request = transaction.request();
+        const insertQuery2 = `INSERT INTO NeumenApi.dbo.roles_usuarios (id_Rol, id_Usuario)
+        VALUES (@id_Rol, @id_Usuario)  `;
+        await request
+          .input('id_Rol', idRol.id)
+          .input('id_Usuario', ID_Usuario)
+          .query(insertQuery2);
+      }
+
+      await transaction.commit();
+      return nuevo;
+    } catch (error) {
+      console.log('object');
+      //console.error('Error al crear usuario:', error);
+      await transaction.rollback();
+      throw error;
+    } finally {
+      // Importante: liberar la conexión de nuevo al pool en la cláusula finally
+      pool.close();
+    }
   }
   async createUser(dto: NuevoUsuarioDto): Promise<any> {
     const { username, email } = dto;
-    const exists = await this.authRepository.findOne({
-      where: [{ username: username }, { email: email }],
-    });
-    if (exists)
-      throw new BadRequestException('El usuario que ingresaste ya existe');
 
-    const rolUser = await this.rolRepository.findOne({
-      where: [{ rolNombre: RolNombre.USER }],
-    });
+    const whereClause =
+      username && email
+        ? ` where username = '${username}' and email = '${email}'`
+        : '';
+    var query = `
+        SELECT *
+        FROM NeumenApi.dbo.usuarios ${whereClause}
+    `;
+    var result;
 
-    if (!rolUser)
-      throw new InternalServerErrorException('los roles no han sido creados');
+    // Obtener conexión del pool
+    const pool = await this.sql.getConnection();
 
-    const admin = this.authRepository.create(dto);
-    admin.roles = [rolUser];
-    const nuevo = this.authRepository.save(admin);
+    const transaction = new Transaction(pool);
+    try {
+      await transaction.begin();
+      // Ejecutar la consulta
+      //const request = pool.request();
+      const request = transaction.request();
+      // Ejecutar la consulta
+      result = await request.query(query);
 
-    return nuevo;
+      if (result.recordset.length == 1)
+        throw new BadRequestException('El usuario que ingresaste ya existe');
+
+      query = `
+      SELECT *
+      FROM NeumenApi.dbo.roles
+      WHERE rolNombre = @rolNombre 
+  `;
+      // Ejecutar la consulta con un parámetro
+      result = await request.input('rolNombre', RolNombre.USER).query(query);
+
+      if (result.rowsAffected[0] == 0) {
+        //await transaction.rollback();
+        throw new BadRequestException('los roles no han sido creados');
+      }
+
+      const hashedPassword = await hash(dto.password, 10);
+      const user = {
+        // Asegúrate de asignar las propiedades correctas según tu modelo de usuario
+        username: dto.username,
+
+        email: dto.email,
+        nombre: dto.nombre,
+        password: hashedPassword,
+        denominacion: dto.denominacion,
+        isActivo: true,
+        nivel: dto.nivel,
+
+        // ... otras propiedades del usuario
+      };
+
+      const insertQuery = `
+      INSERT INTO NeumenApi.dbo.usuarios (nombre,username,email,password,denominacion,nivel,isActivo)
+      VALUES (@nombre,@username,@email,@password,@denominacion,@nivel,@isActivo)
+  `;
+      const nuevo = await request
+
+        .input('nombre', user.nombre)
+        .input('username', user.username)
+        .input('email', user.email)
+        .input('password', user.password)
+        .input('denominacion', user.denominacion)
+        .input('nivel', user.nivel)
+        .input('isActivo', user.isActivo)
+        .query(insertQuery);
+      const resultx = await request.query(
+        'SELECT MAX(id) AS id FROM NeumenApi.dbo.usuarios',
+      );
+      const ID_Usuario = resultx.recordset[0].id;
+
+      for (const idRol of result.recordset) {
+        const request = transaction.request();
+        const insertQuery2 = `INSERT INTO NeumenApi.dbo.roles_usuarios (id_Rol, id_Usuario)
+        VALUES (@id_Rol, @id_Usuario)  `;
+        await request
+          .input('id_Rol', idRol.id)
+          .input('id_Usuario', ID_Usuario)
+          .query(insertQuery2);
+      }
+
+      await transaction.commit();
+      return nuevo;
+    } catch (error) {
+      await transaction.rollback();
+      throw error;
+    } finally {
+      // Importante: liberar la conexión de nuevo al pool en la cláusula finally
+      pool.close();
+    }
   }
+
   async login(dto: LoginUsuarioDto): Promise<any> {
-    const { username } = dto;
+    const { username, password } = dto;
     /*  
     const usuario = await this.authRepository.findOne({
       where: [{ username: username }, { email: username }],
@@ -162,31 +458,64 @@ export class AuthService {
 */
     //console.log('usuario2: ', username);
 
-    const usuario = await this.authRepository
-      .createQueryBuilder('usuario')
-      .addSelect('usuario.password') // Recupera la contraseña
-      .leftJoinAndSelect('usuario.roles', 'roles') // Carga los roles relacionados
-      .where('usuario.username = :username', { username })
-      .getOne();
+    const whereClause = username ? ` where u.username = '${username}'` : '';
+    var query = `
+    SELECT u.*, r.*
+    FROM NeumenApi.dbo.usuarios u
+    JOIN NeumenApi.dbo.roles_usuarios ur ON u.id = ur.id_Usuario
+    JOIN NeumenApi.dbo.roles r ON ur.id_Rol = r.id
+     ${whereClause}
+    `;
+
+    // Obtener conexión del pool
+    const pool = await this.sql.getConnection();
+
+    try {
+      // Ejecutar la consulta
+      const result = await pool.request().query(query);
+
+      const roles = result.recordset.map((row) => row.rolNombre);
+      
+      // Devolver el conjunto de registros
+
+      if (result.rowsAffected == 0)
+        throw new UnauthorizedException('No existe el usuario2');
+      const passwordOK = await compare(password, result.recordset[0].password);
+
+      if (!passwordOK) throw new UnauthorizedException('Contraseña Erronea');
+      
+      const payload: PayLoadInterface = {
+        id: result.recordset[0].id[0],
+        username: result.recordset[0].username,
+        email: result.recordset[0].email,
+        roles: roles,
+      };
+      //console.log(payload);
+      const token = await this.jwtService.sign(payload);
+      return token;
+    } finally {
+      // Importante: liberar la conexión de nuevo al pool en la cláusula finally
+      pool.close();
+    }
 
     //console.log('usuario: ', usuario);
 
-    if (!usuario) throw new UnauthorizedException('No existe el usuario2');
-    const passwordOK = await compare(dto.password, usuario.password);
-    //console.log('usuario.password: ', usuario.password);
-    //console.log('dto.password: ', dto.password);
-    //$2a$10$Cjbo5PmGopuvi7WiFSe3Uu58dnpT2dF1Q0HnaZno9qHeLcypH09Ji
+    // if (!usuario) throw new UnauthorizedException('No existe el usuario2');
+    // const passwordOK = await compare(dto.password, usuario.password);
+    // //console.log('usuario.password: ', usuario.password);
+    // //console.log('dto.password: ', dto.password);
+    // //$2a$10$Cjbo5PmGopuvi7WiFSe3Uu58dnpT2dF1Q0HnaZno9qHeLcypH09Ji
 
-    if (!passwordOK) throw new UnauthorizedException('Contraseña Erronea');
-    const payload: PayLoadInterface = {
-      id: usuario.id,
-      username: usuario.username,
-      email: usuario.email,
-      roles: usuario.roles.map((rol) => rol.rolNombre as RolNombre),
-    };
-    const token = await this.jwtService.sign(payload);
-    //console.log(token);
-    return token;
+    // if (!passwordOK) throw new UnauthorizedException('Contraseña Erronea');
+    // const payload: PayLoadInterface = {
+    //   id: usuario.id,
+    //   username: usuario.username,
+    //   email: usuario.email,
+    //   roles: usuario.roles.map((rol) => rol.rolNombre as RolNombre),
+    // };
+    // const token = await this.jwtService.sign(payload);
+    // //console.log(token);
+    // return token;
   }
 
   async refresh(dto: TokenDto): Promise<any> {

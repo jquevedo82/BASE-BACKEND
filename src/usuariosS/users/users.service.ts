@@ -2,12 +2,10 @@ import {
   BadRequestException,
   ConflictException,
   Injectable,
-  InternalServerErrorException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { MsSqlConnectService } from 'src/config/mssqlconnect.service';
 import { Repository } from 'typeorm';
-import { Rol } from '../roles/entities/rol.entity';
 import { RolNombre } from '../roles/entities/rol.enum';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -18,8 +16,6 @@ export class UsersService {
   constructor(
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
-    //@InjectRepository(Rol)
-    //private readonly rolesRepository: Repository<Rol>,
     private readonly sql: MsSqlConnectService,
   ) {}
 
@@ -38,7 +34,7 @@ export class UsersService {
       // Ejecutar la consulta
       result = await pool.request().query(query);
       if (result.recordset.length == 1)
-        throw new ConflictException('El rol que ingresaste ya existe');
+        throw new BadRequestException('El usuario que ingresaste ya existe');
 
       query = `
       SELECT *
@@ -55,7 +51,7 @@ export class UsersService {
       if (result.recordset.length == 0)
         throw new BadRequestException('los roles no han sido creados');
 
-     const user = {
+      const user = {
         // Asegúrate de asignar las propiedades correctas según tu modelo de usuario
         username: dto.username,
         roles: [result.recordset],
@@ -63,30 +59,28 @@ export class UsersService {
         nombre: dto.nombre,
         password: dto.password,
         denominacion: dto.denominacion,
-        isActivo: dto.isActivo,
+        //isActivo: dto.isActivo,
         nivel: dto.nivel,
 
         // ... otras propiedades del usuario
       };
 
-
       const insertQuery = `
       INSERT INTO NeumenApi.dbo.roles (rolNombre, otrasColumnas)
       VALUES (@rolNombre, @otrasColumnas)
   `;
-  const nuevo=await pool
-      .request()
-      .input('nombre',user.nombre)
-      .input('username',user.username)
-      .input('email',user.email)
-      .input('password',user.password)
-      .input('denominacion',user.denominacion)
-      .input('nivel',user.nivel)
-      .input('isActivo',user.isActivo)
-      .input('id_Rol', user.roles)
-      .query(insertQuery);
+      const nuevo = await pool
+        .request()
+        .input('nombre', user.nombre)
+        .input('username', user.username)
+        .input('email', user.email)
+        .input('password', user.password)
+        .input('denominacion', user.denominacion)
+        .input('nivel', user.nivel)
+        //.input('isActivo', user.isActivo)
+        .input('id_Rol', user.roles)
+        .query(insertQuery);
       return nuevo;
-
     } finally {
       // Importante: liberar la conexión de nuevo al pool en la cláusula finally
       pool.close();

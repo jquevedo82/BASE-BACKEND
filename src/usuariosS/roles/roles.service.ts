@@ -1,13 +1,8 @@
 import {
-  BadRequestException,
   ConflictException,
-  HttpStatus,
   Injectable,
-  NotFoundException,
 } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { MsSqlConnectService } from 'src/config/mssqlconnect.service';
-import { Repository } from 'typeorm';
 import { CreateRoleDto } from './dto/create-role.dto';
 import { UpdateRoleDto } from './dto/update-role.dto';
 import { Rol } from './entities/rol.entity';
@@ -15,8 +10,6 @@ import { Rol } from './entities/rol.entity';
 @Injectable()
 export class RolesService {
   constructor(
-    @InjectRepository(Rol)
-    //private readonly rolesRepository: Repository<Rol>,
     private readonly sql: MsSqlConnectService,
   ) {}
   async create(createRoleDto: CreateRoleDto) {
