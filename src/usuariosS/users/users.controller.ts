@@ -76,7 +76,7 @@ export class UsersController {
   @Get()
   //@UseGuards(JwtAuthGuard)//bloquea todo si no trae un token bearer
   //@RolDecorator(RolNombre.DEV) //indicamos que tipo usuario puede accesr a este acces point
-  //  @UseGuards(JwtAuthGuard, RolesGuard) // autenticacion jwt y que sea el roll antes detallado
+  //@UseGuards(JwtAuthGuard, RolesGuard) // autenticacion jwt y que sea el roll antes detallado
   @ApiOperation({ summary: 'Consultar Listado de Usuarios del Sistemas' })
   @ApiOkResponse({ description: 'Listados de Usuarios', type: [User] })
   @ApiForbiddenResponse({ description: 'Forbidden..' })
@@ -143,7 +143,7 @@ export class UsersController {
     const data = await this.usersService.findById(id);
     const message = 'OK';
 
-    this.writeLog.writeLog(startTime, '', HttpStatus.OK, message);
+    this.writeLog.writeLog(startTime, request, HttpStatus.OK, message);
 
     return res.status(HttpStatus.OK).json({
       statusCode: HttpStatus.OK,
@@ -153,8 +153,8 @@ export class UsersController {
   }
 
  // @UsePipes(new ValidationPipe({ whitelist: true })) //limpia los que no tiene validacion en el dto
-  @RolDecorator(RolNombre.ADMIN)
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  //@RolDecorator(RolNombre.ADMIN)
+  //@UseGuards(JwtAuthGuard, RolesGuard)
   @Patch(':id')
   @ApiOperation({ summary: 'Modificar un Usuario específico' })
   @ApiResponse({
@@ -175,7 +175,7 @@ export class UsersController {
     const data = await this.usersService.update(codigoId, updateUsuarioDto);
     const message = 'OK';
 
-    this.writeLog.writeLog(startTime, '', HttpStatus.OK, message);
+    this.writeLog.writeLog(startTime, request, HttpStatus.OK, message);
 
     return res.status(HttpStatus.OK).json({
       statusCode: HttpStatus.OK,
@@ -184,8 +184,8 @@ export class UsersController {
     });
   }
 
-  @RolDecorator(RolNombre.ADMIN)
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  //@RolDecorator(RolNombre.ADMIN)
+  //@UseGuards(JwtAuthGuard, RolesGuard)
   @Delete(':id')
   @ApiOperation({ summary: 'Eliminar un Usuario específico' })
   @ApiResponse({
@@ -211,7 +211,7 @@ export class UsersController {
     // const data = await this.usersService.remove(codigoId);
     // const message = 'Elemento Eliminado Totalmente';
 
-    this.writeLog.writeLog(startTime, '', HttpStatus.OK, message);
+    this.writeLog.writeLog(startTime, request, HttpStatus.OK, message);
 
     return res.status(HttpStatus.OK).json({
       statusCode: HttpStatus.OK,

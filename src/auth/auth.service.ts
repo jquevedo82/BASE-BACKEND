@@ -1,12 +1,9 @@
 import {
   BadRequestException,
-  Inject,
   Injectable,
-  InternalServerErrorException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { InjectRepository } from '@nestjs/typeorm';
 import { compare, hash } from 'bcryptjs';
 import { Transaction } from 'mssql';
 import { MsSqlConnectService } from 'src/config/mssqlconnect.service';

@@ -23,10 +23,11 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     const request = ctx.getRequest();
     const status = exception.getStatus();
     const result = exception.getResponse();
+    
     console.log(result);
 
     const startTime = Date.now();
-
+    
     this.writeLog(startTime, request, status, result);
 
     response.status(status).json({
