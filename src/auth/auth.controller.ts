@@ -86,6 +86,7 @@ export class AuthController {
     @Body() dto: LoginUsuarioDto,
     @Res() res,
   ): Promise<TokenDto> {
+    
     const startTime = Date.now();
     this.writeLog.writeLog(startTime, request, HttpStatus.OK, '');
 

@@ -447,6 +447,7 @@ export class AuthService {
 
   async login(dto: LoginUsuarioDto): Promise<any> {
     const { username, password } = dto;
+    
     /*  
     const usuario = await this.authRepository.findOne({
       where: [{ username: username }, { email: username }],
@@ -489,6 +490,7 @@ export class AuthService {
       };
       //console.log(payload);
       const token = await this.jwtService.sign(payload);
+      
       return token;
     } finally {
       // Importante: liberar la conexión de nuevo al pool en la cláusula finally

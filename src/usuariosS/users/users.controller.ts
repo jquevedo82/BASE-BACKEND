@@ -84,7 +84,8 @@ export class UsersController {
     @Req() request: Request,
     @Query() filterQuery,
     @Res() res,
-  ): Promise<User[]> {
+//  ): Promise<User[]> {
+  ): Promise<any> {
     const startTime = Date.now();
 
     const data = await this.usersService.findAll(filterQuery);

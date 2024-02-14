@@ -13,6 +13,7 @@ import { WinstonModule } from 'nest-winston';
 import { loggerOptions } from './config/winston-logger.config';
 import { APP_FILTER } from '@nestjs/core';
 import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
+import { PersonalModule } from './modules/personal/personal.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { GlobalExceptionFilter } from './common/filters/global-exception.filter'
     AuthModule,
     UsersModule,
     RolesModule,
+    PersonalModule
   ],
   controllers: [AppController],
   providers: [

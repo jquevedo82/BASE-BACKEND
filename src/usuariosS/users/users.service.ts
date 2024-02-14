@@ -3,11 +3,9 @@ import {
   ConflictException,
   Injectable,
 } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { hashSync } from 'bcryptjs';
 import { Transaction } from 'mssql';
 import { MsSqlConnectService } from 'src/config/mssqlconnect.service';
-import { Repository } from 'typeorm';
 import { RolNombre } from '../roles/entities/rol.enum';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -16,8 +14,6 @@ import { User } from './entities/user.entity';
 @Injectable()
 export class UsersService {
   constructor(
-    @InjectRepository(User)
-    private readonly userRepository: Repository<User>,
     private readonly sql: MsSqlConnectService,
   ) {}
 
@@ -117,13 +113,17 @@ export class UsersService {
     }
   }
 
-  async findAll(filterQuery): Promise<User[]> {
+  async findAll(filterQuery): Promise<any> {//Promise<User[]> {
     const { limit } = filterQuery;
 
     const topClause = limit ? `TOP ${limit}` : '';
     const query = `
     SELECT ${topClause} *
     FROM NeumenApi.dbo.usuarios 
+`;
+const queryCount = `
+SELECT count (*) as total
+FROM NeumenApi.dbo.usuarios 
 `;
 
     // Obtener conexión del pool
@@ -134,7 +134,14 @@ export class UsersService {
       const result = await pool.request().query(query);
       if (!result.recordset.length) return [];
       // Devolver el conjunto de registros
-      return result.recordset;
+      //return result.recordset;
+      const result2 = await pool.request().query(queryCount);
+      return {
+        total: result2.recordset[0].total,
+        limit: result.rowsAffected[0],
+        results: result.recordset,
+      };
+      
     } finally {
       // Importante: liberar la conexión de nuevo al pool en la cláusula finally
       pool.close();
