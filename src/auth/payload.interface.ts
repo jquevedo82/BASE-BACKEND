@@ -2,6 +2,7 @@
 export interface PayLoadInterface {
   id: number;
   username: string;
-  email: string;
-  roles: string[];
+  descri: string;
+  roles: string;
+  sucursal: string
 }

@@ -10,9 +10,11 @@ export class PersonalService {
     return 'This action adds a new personal';
   }
 
+
   async findAll(filterQuery): Promise<any> {
     let { dato, selects, where, limit, order } = filterQuery;
     let where2;
+   
 
     if (selects === undefined)
       selects = ' Apellido, Nombres, NroLegaBej, NroLegaVal, NroCui, NroDni ';
@@ -39,6 +41,7 @@ export class PersonalService {
   ;
 `;
 
+
     const pool = await this.sql.getConnection();
     try {
       const request2 = pool.request();
@@ -46,7 +49,6 @@ export class PersonalService {
       // Ejecutar la consulta
       const request = pool.request();
       const result = await request.query(sqlQuery);
-
       return {
         total: result2.recordset[0].total,
         limit: result.rowsAffected[0],
@@ -59,7 +61,7 @@ export class PersonalService {
   }
 
   findOne(id: number) {
-    return `This action returns a #${id} personal`;
+    return {id};
   }
 
   update(id: number, updatePersonalDto: UpdatePersonalDto) {
@@ -67,6 +69,6 @@ export class PersonalService {
   }
 
   remove(id: number) {
-    return `This action removes a #${id} personal`;
+    return {"id":id};
   }
 }

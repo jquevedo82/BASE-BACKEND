@@ -24,15 +24,15 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   async validate(payload: PayLoadInterface) {
     
    // return { userId: payload.id, username: payload.username };
-    const { username, email } = payload;
+    const { username, descri } = payload;
     
     const whereClause =
-      username && email
-        ? ` where username = '${username}' and email = '${email}'`
+      username && descri
+        ? ` where username = '${username}' and Descri = '${descri}'`
         : '';
     var query = `
         SELECT *
-        FROM NeumenApi.dbo.usuarios ${whereClause}
+        FROM NeumenApi.dbo.lvw_Usuarios ${whereClause}
     `;
         
 

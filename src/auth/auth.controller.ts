@@ -45,8 +45,8 @@ export class AuthController {
   ) {}
 
   //@UseGuards(JwtAuthGuard) //bloquea todo si no trae un token bearer
-  @RolDecorator(RolNombre.USER) //indicamos que tipo usuario puede accesr a este acces point
-  @UseGuards(JwtAuthGuard, RolesGuard)// autenticacion jwt y que sea el roll antes detallado
+  //@RolDecorator(RolNombre.USER) //indicamos que tipo usuario puede accesr a este acces point
+  //@UseGuards(JwtAuthGuard, RolesGuard)// autenticacion jwt y que sea el roll antes detallado
   @Get()
   @ApiOperation({ summary: 'Lista  Los Usuario Del sistema' })
   @ApiResponse({
@@ -123,112 +123,112 @@ export class AuthController {
     });
   }
 
-  @UsePipes(new ValidationPipe({ whitelist: true }))
-  @Post('dev')
-  //@UseGuards(JwtAuthGuard)//bloquea todo si no trae un token bearer
-  //@RolDecorator(RolNombre.DEV) //indicamos que tipo usuario puede accesr a este acces point
-  //@UseGuards(JwtAuthGuard, RolesGuard)// autenticacion jwt y que sea el roll antes detallado
-  @ApiOperation({ summary: 'Crear un Usuario Nuevo' })
-  @ApiResponse({
-    status: 201,
-    description: 'Mensaje exito o Error',
-    type: String,
-  })
-  async createDev(
-    @Req() request: Request,
-    @Body() dto: NuevoUsuarioDto,
-    @Res() res,
-  ): Promise<any> {
-    const startTime = Date.now();
-    // console.log(dto);
-    this.writeLog.writeLog(startTime, request, HttpStatus.OK, '');
-    const data = await this.authService.createDev(dto);
-    return res.status(HttpStatus.OK).json({
-      statusCode: HttpStatus.OK,
-      message: 'OK',
-      data: data,
-    });
-  }
+  // @UsePipes(new ValidationPipe({ whitelist: true }))
+  // @Post('dev')
+  // //@UseGuards(JwtAuthGuard)//bloquea todo si no trae un token bearer
+  // //@RolDecorator(RolNombre.DEV) //indicamos que tipo usuario puede accesr a este acces point
+  // //@UseGuards(JwtAuthGuard, RolesGuard)// autenticacion jwt y que sea el roll antes detallado
+  // @ApiOperation({ summary: 'Crear un Usuario Nuevo' })
+  // @ApiResponse({
+  //   status: 201,
+  //   description: 'Mensaje exito o Error',
+  //   type: String,
+  // })
+  // async createDev(
+  //   @Req() request: Request,
+  //   @Body() dto: NuevoUsuarioDto,
+  //   @Res() res,
+  // ): Promise<any> {
+  //   const startTime = Date.now();
+  //   // console.log(dto);
+  //   this.writeLog.writeLog(startTime, request, HttpStatus.OK, '');
+  //   const data = await this.authService.createDev(dto);
+  //   return res.status(HttpStatus.OK).json({
+  //     statusCode: HttpStatus.OK,
+  //     message: 'OK',
+  //     data: data,
+  //   });
+  // }
 
-  @UsePipes(new ValidationPipe({ whitelist: true }))
-  @Post('super')
-  //@UseGuards(JwtAuthGuard)//bloquea todo si no trae un token bearer
-  @RolDecorator(RolNombre.DEV) //indicamos que tipo usuario puede accesr a este acces point
-  @UseGuards(JwtAuthGuard, RolesGuard) // autenticacion jwt y que sea el roll antes detallado
-  @ApiOperation({ summary: 'Crear un Usuario Nuevo' })
-  @ApiResponse({
-    status: 201,
-    description: 'Mensaje exito o Error',
-    type: String,
-  })
-  async createSuper(
-    @Req() request: Request,
-    @Body() dto: NuevoUsuarioDto,
-    @Res() res,
-  ): Promise<any> {
-    const startTime = Date.now();
-    // console.log(dto);
-    this.writeLog.writeLog(startTime, request, HttpStatus.OK, '');
-    const data = await this.authService.createSuper(dto);
-    return res.status(HttpStatus.OK).json({
-      statusCode: HttpStatus.OK,
-      message: 'OK',
-      data: data,
-    });
-  }
+  // @UsePipes(new ValidationPipe({ whitelist: true }))
+  // @Post('super')
+  // //@UseGuards(JwtAuthGuard)//bloquea todo si no trae un token bearer
+  // @RolDecorator(RolNombre.DEV) //indicamos que tipo usuario puede accesr a este acces point
+  // @UseGuards(JwtAuthGuard, RolesGuard) // autenticacion jwt y que sea el roll antes detallado
+  // @ApiOperation({ summary: 'Crear un Usuario Nuevo' })
+  // @ApiResponse({
+  //   status: 201,
+  //   description: 'Mensaje exito o Error',
+  //   type: String,
+  // })
+  // async createSuper(
+  //   @Req() request: Request,
+  //   @Body() dto: NuevoUsuarioDto,
+  //   @Res() res,
+  // ): Promise<any> {
+  //   const startTime = Date.now();
+  //   // console.log(dto);
+  //   this.writeLog.writeLog(startTime, request, HttpStatus.OK, '');
+  //   const data = await this.authService.createSuper(dto);
+  //   return res.status(HttpStatus.OK).json({
+  //     statusCode: HttpStatus.OK,
+  //     message: 'OK',
+  //     data: data,
+  //   });
+  // }
 
-  @UsePipes(new ValidationPipe({ whitelist: true }))
-  @Post('admin')
-  //@UseGuards(JwtAuthGuard)//bloquea todo si no trae un token bearer
-  @RolDecorator(RolNombre.DEV, RolNombre.SUPER) //indicamos que tipo usuario puede accesr a este acces point
-  @UseGuards(JwtAuthGuard, RolesGuard) // autenticacion jwt y que sea el roll antes detallado
-  @ApiOperation({ summary: 'Crear un Usuario Nuevo' })
-  @ApiResponse({
-    status: 201,
-    description: 'Mensaje exito o Error',
-    type: String,
-  })
-  async createAdmin(
-    @Req() request: Request,
-    @Body() dto: NuevoUsuarioDto,
-    @Res() res,
-  ): Promise<any> {
-    const startTime = Date.now();
-    //  console.log(dto);
-    this.writeLog.writeLog(startTime, request, HttpStatus.OK, '');
-    const data = await this.authService.createAdmin(dto);
-    return res.status(HttpStatus.OK).json({
-      statusCode: HttpStatus.OK,
-      message: 'OK',
-      data: data,
-    });
-  }
-  @UsePipes(new ValidationPipe({ whitelist: true }))
-  @Post('user')
-  //@UseGuards(JwtAuthGuard)//bloquea todo si no trae un token bearer
-  //@RolDecorator(RolNombre.DEV, RolNombre.SUPER, RolNombre.ADMIN) //indicamos que tipo usuario puede accesr a este acces point
-  //@UseGuards(JwtAuthGuard, RolesGuard) // autenticacion jwt y que sea el roll antes detallado
-  @ApiOperation({ summary: 'Crear un Usuario Nuevo' })
-  @ApiResponse({
-    status: 201,
-    description: 'Mensaje exito o Error',
-    type: String,
-  })
-  async createUser(
-    @Req() request: Request,
-    @Body() dto: NuevoUsuarioDto,
-    @Res() res,
-  ): Promise<any> {
-    const startTime = Date.now();
+  // @UsePipes(new ValidationPipe({ whitelist: true }))
+  // @Post('admin')
+  // //@UseGuards(JwtAuthGuard)//bloquea todo si no trae un token bearer
+  // @RolDecorator(RolNombre.DEV, RolNombre.SUPER) //indicamos que tipo usuario puede accesr a este acces point
+  // @UseGuards(JwtAuthGuard, RolesGuard) // autenticacion jwt y que sea el roll antes detallado
+  // @ApiOperation({ summary: 'Crear un Usuario Nuevo' })
+  // @ApiResponse({
+  //   status: 201,
+  //   description: 'Mensaje exito o Error',
+  //   type: String,
+  // })
+  // async createAdmin(
+  //   @Req() request: Request,
+  //   @Body() dto: NuevoUsuarioDto,
+  //   @Res() res,
+  // ): Promise<any> {
+  //   const startTime = Date.now();
+  //   //  console.log(dto);
+  //   this.writeLog.writeLog(startTime, request, HttpStatus.OK, '');
+  //   const data = await this.authService.createAdmin(dto);
+  //   return res.status(HttpStatus.OK).json({
+  //     statusCode: HttpStatus.OK,
+  //     message: 'OK',
+  //     data: data,
+  //   });
+  // }
+  // @UsePipes(new ValidationPipe({ whitelist: true }))
+  // @Post('user')
+  // //@UseGuards(JwtAuthGuard)//bloquea todo si no trae un token bearer
+  // //@RolDecorator(RolNombre.DEV, RolNombre.SUPER, RolNombre.ADMIN) //indicamos que tipo usuario puede accesr a este acces point
+  // //@UseGuards(JwtAuthGuard, RolesGuard) // autenticacion jwt y que sea el roll antes detallado
+  // @ApiOperation({ summary: 'Crear un Usuario Nuevo' })
+  // @ApiResponse({
+  //   status: 201,
+  //   description: 'Mensaje exito o Error',
+  //   type: String,
+  // })
+  // async createUser(
+  //   @Req() request: Request,
+  //   @Body() dto: NuevoUsuarioDto,
+  //   @Res() res,
+  // ): Promise<any> {
+  //   const startTime = Date.now();
      
-    this.writeLog.writeLog(startTime, request, HttpStatus.OK, '');
+  //   this.writeLog.writeLog(startTime, request, HttpStatus.OK, '');
     
-    const data = await this.authService.createUser(dto);
-    return res.status(HttpStatus.OK).json({
-      statusCode: HttpStatus.OK,
-      message: 'OK',
-      data: data,
-    });
-  }
+  //   const data = await this.authService.createUser(dto);
+  //   return res.status(HttpStatus.OK).json({
+  //     statusCode: HttpStatus.OK,
+  //     message: 'OK',
+  //     data: data,
+  //   });
+  // }
 
 }

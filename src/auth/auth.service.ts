@@ -26,7 +26,7 @@ export class AuthService {
     const topClause = limit ? `TOP ${limit}` : '';
     const query = `
         SELECT ${topClause} *
-        FROM NeumenApi.dbo.usuarios
+        FROM NeumenApi.dbo.lvw_Usuarios
     `;
 
     // Obtener conexión del pool
@@ -445,76 +445,116 @@ export class AuthService {
     }
   }
 
+  //   async login2(dto: LoginUsuarioDto): Promise<any> {
+  //     const { username, password } = dto;
+
+  //     /*
+  //     const usuario = await this.authRepository.findOne({
+  //       where: [{ username: username }, { email: username }],
+  //     });
+  //     console.log("usuario: ", usuario);
+  // */
+  //     //console.log('usuario2: ', username);
+
+  //     const whereClause = username ? ` where u.username = '${username}'` : '';
+  //     var query = `
+  //     SELECT u.*, r.*
+  //     FROM NeumenApi.dbo.usuarios u
+  //     JOIN NeumenApi.dbo.roles_usuarios ur ON u.id = ur.id_Usuario
+  //     JOIN NeumenApi.dbo.roles r ON ur.id_Rol = r.id
+  //      ${whereClause}
+  //     `;
+
+  //     // Obtener conexión del pool
+  //     const pool = await this.sql.getConnection();
+
+  //     try {
+  //       // Ejecutar la consulta
+  //       const result = await pool.request().query(query);
+
+  //       const roles = result.recordset.map((row) => row.rolNombre);
+
+  //       // Devolver el conjunto de registros
+
+  //       if (result.rowsAffected == 0)
+  //         throw new UnauthorizedException('No existe el usuario2');
+  //       const passwordOK = await compare(password, result.recordset[0].password);
+
+  //       if (!passwordOK) throw new UnauthorizedException('Contraseña Erronea');
+
+  //       const payload: PayLoadInterface = {
+  //         id: result.recordset[0].id[0],
+  //         username: result.recordset[0].username,
+  //         email: result.recordset[0].email,
+  //         roles: roles,
+  //       };
+  //       //console.log(payload);
+  //       const token = await this.jwtService.sign(payload);
+
+  //       return token;
+  //     } finally {
+  //       // Importante: liberar la conexión de nuevo al pool en la cláusula finally
+  //       pool.close();
+  //     }
+
+  //     //console.log('usuario: ', usuario);
+
+  //     // if (!usuario) throw new UnauthorizedException('No existe el usuario2');
+  //     // const passwordOK = await compare(dto.password, usuario.password);
+  //     // //console.log('usuario.password: ', usuario.password);
+  //     // //console.log('dto.password: ', dto.password);
+  //     // //$2a$10$Cjbo5PmGopuvi7WiFSe3Uu58dnpT2dF1Q0HnaZno9qHeLcypH09Ji
+
+  //     // if (!passwordOK) throw new UnauthorizedException('Contraseña Erronea');
+  //     // const payload: PayLoadInterface = {
+  //     //   id: usuario.id,
+  //     //   username: usuario.username,
+  //     //   email: usuario.email,
+  //     //   roles: usuario.roles.map((rol) => rol.rolNombre as RolNombre),
+  //     // };
+  //     // const token = await this.jwtService.sign(payload);
+  //     // //console.log(token);
+  //     // return token;
+  //   }
   async login(dto: LoginUsuarioDto): Promise<any> {
     const { username, password } = dto;
-    
-    /*  
-    const usuario = await this.authRepository.findOne({
-      where: [{ username: username }, { email: username }],
-    });
-    console.log("usuario: ", usuario);
-*/
-    //console.log('usuario2: ', username);
 
-    const whereClause = username ? ` where u.username = '${username}'` : '';
+    const whereClause = username ? ` where username = '${username}'` : '';
     var query = `
-    SELECT u.*, r.*
-    FROM NeumenApi.dbo.usuarios u
-    JOIN NeumenApi.dbo.roles_usuarios ur ON u.id = ur.id_Usuario
-    JOIN NeumenApi.dbo.roles r ON ur.id_Rol = r.id
+    SELECT *
+    FROM NeumenApi.dbo.lvw_Usuarios
+
      ${whereClause}
     `;
 
     // Obtener conexión del pool
     const pool = await this.sql.getConnection();
-
     try {
       // Ejecutar la consulta
       const result = await pool.request().query(query);
-
-      const roles = result.recordset.map((row) => row.rolNombre);
-      
       // Devolver el conjunto de registros
-
       if (result.rowsAffected == 0)
         throw new UnauthorizedException('No existe el usuario2');
-      const passwordOK = await compare(password, result.recordset[0].password);
+      const pass = await hash(result.recordset[0].password, 10);
+      const passwordOK = await compare(password, pass);
 
       if (!passwordOK) throw new UnauthorizedException('Contraseña Erronea');
-      
+
       const payload: PayLoadInterface = {
-        id: result.recordset[0].id[0],
+        id: result.recordset[0].username,
         username: result.recordset[0].username,
-        email: result.recordset[0].email,
-        roles: roles,
+        descri: result.recordset[0].Descri,
+        roles: result.recordset[0].Nivel,
+        sucursal: result.recordset[0].nrosuc,
       };
-      //console.log(payload);
-      const token = await this.jwtService.sign(payload);
-      
+      console.log(payload);
+      const token = this.jwtService.sign(payload);
+
       return token;
     } finally {
       // Importante: liberar la conexión de nuevo al pool en la cláusula finally
       pool.close();
     }
-
-    //console.log('usuario: ', usuario);
-
-    // if (!usuario) throw new UnauthorizedException('No existe el usuario2');
-    // const passwordOK = await compare(dto.password, usuario.password);
-    // //console.log('usuario.password: ', usuario.password);
-    // //console.log('dto.password: ', dto.password);
-    // //$2a$10$Cjbo5PmGopuvi7WiFSe3Uu58dnpT2dF1Q0HnaZno9qHeLcypH09Ji
-
-    // if (!passwordOK) throw new UnauthorizedException('Contraseña Erronea');
-    // const payload: PayLoadInterface = {
-    //   id: usuario.id,
-    //   username: usuario.username,
-    //   email: usuario.email,
-    //   roles: usuario.roles.map((rol) => rol.rolNombre as RolNombre),
-    // };
-    // const token = await this.jwtService.sign(payload);
-    // //console.log(token);
-    // return token;
   }
 
   async refresh(dto: TokenDto): Promise<any> {
@@ -522,12 +562,14 @@ export class AuthService {
       throw new UnauthorizedException('Token No Encontrado o Ausente');
     const usuario = await this.jwtService.decode(dto.token);
     if (!usuario) throw new UnauthorizedException('Token Inválido o No Válido');
+
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const payload: PayLoadInterface = {
       id: usuario['id'],
       username: usuario['username'],
-      email: usuario['email'],
+      descri: usuario['descri'],
       roles: usuario['roles'],
+      sucursal: usuario['sucursal'],
     };
     const token = await this.jwtService.sign(payload);
     return token;
