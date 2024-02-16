@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { MsSqlConnectService } from 'src/config/mssqlconnect.service';
 import { CreatePersonalDto } from './dto/create-personal.dto';
 import { UpdatePersonalDto } from './dto/update-personal.dto';
@@ -10,11 +10,9 @@ export class PersonalService {
     return 'This action adds a new personal';
   }
 
-
   async findAll(filterQuery): Promise<any> {
     let { dato, selects, where, limit, order } = filterQuery;
     let where2;
-   
 
     if (selects === undefined)
       selects = ' Apellido, Nombres, NroLegaBej, NroLegaVal, NroCui, NroDni ';
@@ -34,26 +32,15 @@ export class PersonalService {
     ORDER BY ${order} ASC;
   `;
 
-    const sqlCount = `
-  SELECT count (*) as total
-  FROM Vales.dbo.Sueldos_Personal
-  WHERE ( ${where2} ) AND (${where})
-  ;
-`;
-
-
     const pool = await this.sql.getConnection();
     try {
-      const request2 = pool.request();
-      const result2 = await request2.query(sqlCount);
-      // Ejecutar la consulta
       const request = pool.request();
+      console.log(sqlQuery);
+
       const result = await request.query(sqlQuery);
-      return {
-        total: result2.recordset[0].total,
-        limit: result.rowsAffected[0],
-        results: result.recordset,
-      };
+
+      if (!result.recordset[0]) return null;
+      return result.recordset[0];
     } finally {
       // Importante: liberar la conexión de nuevo al pool en la cláusula finally
       pool.close();
@@ -61,7 +48,7 @@ export class PersonalService {
   }
 
   findOne(id: number) {
-    return {id};
+    return { id };
   }
 
   update(id: number, updatePersonalDto: UpdatePersonalDto) {
@@ -69,6 +56,6 @@ export class PersonalService {
   }
 
   remove(id: number) {
-    return {"id":id};
+    return { id: id };
   }
 }

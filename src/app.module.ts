@@ -14,6 +14,7 @@ import { loggerOptions } from './config/winston-logger.config';
 import { APP_FILTER } from '@nestjs/core';
 import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
 import { PersonalModule } from './modules/personal/personal.module';
+import { MenuModule } from './modules/menu/menu.module';
 
 @Module({
   imports: [
@@ -23,7 +24,8 @@ import { PersonalModule } from './modules/personal/personal.module';
     AuthModule,
     UsersModule,
     RolesModule,
-    PersonalModule
+    PersonalModule,
+    MenuModule
   ],
   controllers: [AppController],
   providers: [

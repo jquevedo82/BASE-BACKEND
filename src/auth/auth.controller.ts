@@ -99,7 +99,7 @@ export class AuthController {
   }
 
   @Post('refresh')
-  @UseGuards(JwtAuthGuard) //bloquea todo si no trae un token bearer
+  //@UseGuards(JwtAuthGuard) //bloquea todo si no trae un token bearer
   //@RolDecorator(RolNombre.DEV) //indicamos que tipo usuario puede accesr a este acces point
   //@UseGuards(JwtAuthGuard, RolesGuard)// autenticacion jwt y que sea el roll antes detallado
   @ApiOperation({ summary: 'Refresh del Token de Conexion' })
@@ -114,6 +114,7 @@ export class AuthController {
     @Res() res,
   ): Promise<TokenDto> {
     const startTime = Date.now();
+    //console.log(dto);
     this.writeLog.writeLog(startTime, request, HttpStatus.OK, '');
     const data = await this.authService.refresh(dto);
     return res.status(HttpStatus.OK).json({

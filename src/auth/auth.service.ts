@@ -572,6 +572,7 @@ export class AuthService {
       sucursal: usuario['sucursal'],
     };
     const token = await this.jwtService.sign(payload);
+   // console.log(token);
     return token;
   }
 }

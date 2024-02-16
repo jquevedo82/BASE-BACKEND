@@ -36,7 +36,7 @@ class ConfigService {
       autoLoadEntities: true,
       //entities: [Cliente, Usuario, Rol, Pais, Localidad],
       //synchronize: false,
-      synchronize: true,
+      synchronize: false,
       logging: false,
       //options: { encrypt: false },
     };
