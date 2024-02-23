@@ -10,9 +10,15 @@ export class PersonalService {
     return 'This action adds a new personal';
   }
 
-  async findAll(filterQuery): Promise<any> {
+  async findAll(filterQuery: {
+    dato: any;
+    selects: any;
+    where: any;
+    limit: any;
+    order: any;
+  }): Promise<any> {
     let { dato, selects, where, limit, order } = filterQuery;
-    let where2;
+    let where2: string;
 
     if (selects === undefined)
       selects = ' Apellido, Nombres, NroLegaBej, NroLegaVal, NroCui, NroDni ';
@@ -41,6 +47,53 @@ export class PersonalService {
 
       if (!result.recordset[0]) return null;
       return result.recordset[0];
+    } finally {
+      // Importante: liberar la conexión de nuevo al pool en la cláusula finally
+      pool.close();
+    }
+  }
+
+  async periodoPrueba(filterQuery): Promise<any> {
+    let { dato, limit, order, fechad, fechah } = filterQuery;
+    let where2: string, selects: string, where: string;
+
+    console.log(filterQuery);
+    console.log(dato);
+    console.log(fechah);
+    selects = `Apellido, Nombres, NroLegaBej, NroLegaVal, NroCui, NroDni,IdSucu,Autorizo, FecIng,FecPrue,
+          a.Nombres + ' ' + a.Apellido AS NombreCompleto,
+        (select b.Nombres + ' ' + b.Apellido from Vales.dbo.Sueldos_Personal b where a.Autorizo=b.NroLegaVal) as N2,
+        (select c.Descri from Vales.dbo.Sueldos_Sucursales c where a.IdSucu=c.IdSucu) as S2,     CASE 
+        WHEN Estado = 0 THEN 'Baja'
+        else 'Activo'
+        
+    END AS EstadoTexto 
+        `;
+    if (dato === undefined) dato = '';
+    const datoEnMayusculas = dato.toUpperCase();
+    where =
+      " NroCui != '' and Apellido !=''  and ( FecPrue >= '01-02-2024' and 1=1 )";
+
+    where2 = ` UPPER(Apellido) LIKE '%${datoEnMayusculas}%' OR UPPER(Nombres) LIKE '%${datoEnMayusculas}%' `;
+
+    if (limit === undefined) limit = 100;
+    if (order === undefined) order = ' FecPrue,1, 2 ';
+
+    const sqlQuery = `
+    SELECT TOP ${limit} ${selects}
+    FROM Vales.dbo.Sueldos_Personal a
+    WHERE ( ${where2} ) AND (${where})
+    ORDER BY ${order} ASC;
+  `;
+ // console.log(sqlQuery,11);
+    const pool = await this.sql.getConnection();
+    try {
+      const request = pool.request();
+     // console.log(sqlQuery,12);
+      const result = await request.query(sqlQuery);
+
+      if (!result.recordset[0]) return null;
+      return await result.recordset;
     } finally {
       // Importante: liberar la conexión de nuevo al pool en la cláusula finally
       pool.close();

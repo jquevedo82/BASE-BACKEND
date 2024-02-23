@@ -29,6 +29,7 @@ export class PersonalController {
   create(@Body() createPersonalDto: CreatePersonalDto) {
     return this.personalService.create(createPersonalDto);
   }
+
   @UseGuards(JwtAuthGuard)
   @Get()
   async findAll(@Req() request: Request, @Query() filterQuery, @Res() res) {
@@ -41,6 +42,21 @@ export class PersonalController {
       message: 'OK',
       data: data,
     });
+  }
+
+  @Get('prueba')
+  async findPeriodoPrueba(@Req() request: Request, @Query() filterQuery, @Res() res) {
+
+    console.log(filterQuery,1);
+    const startTime = Date.now();
+    this.writeLog.writeLog(startTime, request, HttpStatus.OK, '');
+    const data = await this.personalService.periodoPrueba(filterQuery);;
+    return res.status(HttpStatus.OK).json({
+      statusCode: HttpStatus.OK,
+      message: 'OK',
+      data: data,
+    });
+    
   }
 
   @Get(':id')

@@ -18,7 +18,8 @@ export class MenuService {
 
   async findOne(filterQuery) {
     const { id } = filterQuery;
-    if (!id) throw new BadRequestException("Consulta mal Planteada"); 
+
+    if (!id) throw new BadRequestException("Consulta mal Planteada 1"); 
     const whereClause =` where IdUsua = '${id}' and Estado ='1' `;
     const query = `
     select * from NeumenApi.dbo.lvw_Menu 
@@ -29,7 +30,7 @@ export class MenuService {
 
     // Obtener conexión del pool
     const pool = await this.sql.getConnection();
-
+console.log(query);
     try {
       // Ejecutar la consulta
       const result = await pool.request().query(query);

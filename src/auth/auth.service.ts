@@ -518,11 +518,12 @@ export class AuthService {
   //   }
   async login(dto: LoginUsuarioDto): Promise<any> {
     const { username, password } = dto;
-
-    const whereClause = username ? ` where username = '${username}'` : '';
+    if (username == undefined)
+      throw new BadRequestException('Error en envio de datos');
+    const whereClause = username ? ` where username = '${username}' or email ='${username}'` : '';
     var query = `
     SELECT *
-    FROM NeumenApi.dbo.lvw_Usuarios
+    FROM NeumenApi.dbo.UsuariosN
 
      ${whereClause}
     `;
@@ -572,7 +573,7 @@ export class AuthService {
       sucursal: usuario['sucursal'],
     };
     const token = await this.jwtService.sign(payload);
-   // console.log(token);
+    // console.log(token);
     return token;
   }
 }
