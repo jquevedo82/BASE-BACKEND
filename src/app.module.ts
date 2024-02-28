@@ -1,3 +1,4 @@
+import { DateFormatService } from './common/services/dateformat.service';
 import { MsSqlConnectService } from './config/mssqlconnect.service';
 import { WriteLogService } from './config/writelog.service';
 import { Module } from '@nestjs/common';
@@ -25,10 +26,11 @@ import { MenuModule } from './modules/menu/menu.module';
     UsersModule,
     RolesModule,
     PersonalModule,
-    MenuModule
+    MenuModule,
   ],
   controllers: [AppController],
   providers: [
+    DateFormatService,
     AppService,
     { provide: APP_FILTER, useClass: GlobalExceptionFilter },
     MsSqlConnectService,

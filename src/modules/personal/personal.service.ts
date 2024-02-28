@@ -1,11 +1,15 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
+import { DateFormatService } from 'src/common/services/dateformat.service';
 import { MsSqlConnectService } from 'src/config/mssqlconnect.service';
 import { CreatePersonalDto } from './dto/create-personal.dto';
 import { UpdatePersonalDto } from './dto/update-personal.dto';
 
 @Injectable()
 export class PersonalService {
-  constructor(private readonly sql: MsSqlConnectService) {}
+  constructor(
+    private readonly sql: MsSqlConnectService,
+    private readonly dateFormat: DateFormatService,
+  ) {}
   create(createPersonalDto: CreatePersonalDto) {
     return 'This action adds a new personal';
   }
@@ -58,8 +62,9 @@ export class PersonalService {
     let where2: string, selects: string, where: string;
 
     console.log(filterQuery);
-    console.log(dato);
-    console.log(fechah);
+    // console.log(dato);
+    // console.log(fechah);
+
     selects = `Apellido, Nombres, NroLegaBej, NroLegaVal, NroCui, NroDni,IdSucu,Autorizo, FecIng,FecPrue,
           a.Nombres + ' ' + a.Apellido AS NombreCompleto,
         (select b.Nombres + ' ' + b.Apellido from Vales.dbo.Sueldos_Personal b where a.Autorizo=b.NroLegaVal) as N2,
@@ -71,8 +76,18 @@ export class PersonalService {
         `;
     if (dato === undefined) dato = '';
     const datoEnMayusculas = dato.toUpperCase();
-    where =
-      " NroCui != '' and Apellido !=''  and ( FecPrue >= '01-02-2024' and 1=1 )";
+
+    let fechadW = `DATEADD(month, DATEDIFF(month, 0, GETDATE()), 0)`;
+    fechad = this.dateFormat.formatDate(fechad);
+    if (fechad != undefined) {
+      fechadW = `'${fechad}'`;
+    }
+
+    let fechahW = ` 1 = 1 `;
+    fechah = this.dateFormat.formatDate(fechah);
+    if (fechah != undefined) fechahW = ` FecPrue <= '${fechah}' `;
+
+    where = ` NroCui != '' and Apellido !=''  and ( FecPrue >= (${fechadW}) and ${fechahW} ) `;
 
     where2 = ` UPPER(Apellido) LIKE '%${datoEnMayusculas}%' OR UPPER(Nombres) LIKE '%${datoEnMayusculas}%' `;
 
@@ -80,16 +95,17 @@ export class PersonalService {
     if (order === undefined) order = ' FecPrue,1, 2 ';
 
     const sqlQuery = `
+    set dateformat dmy
     SELECT TOP ${limit} ${selects}
     FROM Vales.dbo.Sueldos_Personal a
     WHERE ( ${where2} ) AND (${where})
     ORDER BY ${order} ASC;
   `;
- // console.log(sqlQuery,11);
+    console.log(sqlQuery, 11);
     const pool = await this.sql.getConnection();
     try {
       const request = pool.request();
-     // console.log(sqlQuery,12);
+      // console.log(sqlQuery,12);
       const result = await request.query(sqlQuery);
 
       if (!result.recordset[0]) return null;
