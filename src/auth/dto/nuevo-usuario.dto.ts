@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsBoolean } from 'class-validator';
+import { IsBoolean, IsOptional } from 'class-validator';
 import {
   IsEmail,
   IsInt,
@@ -22,8 +22,9 @@ export class NuevoUsuarioDto {
   username: string;
 
   @ApiProperty({ example: 'Correo Electronico' })
+  @IsOptional()
   @IsEmail()
-  email: string;
+  email?: string;
 
   @ApiProperty({ example: 'Contraseña o Password' })
   @IsNotBlank({ message: 'La contraseña no puede estar vacia' })
@@ -31,7 +32,7 @@ export class NuevoUsuarioDto {
  
   @ApiProperty({ example: 'denominacion' })
   @IsNotBlank({ message: 'La contraseña no puede estar vacia' })
-  denominacion: string;
+  Descri: string;
 
   @ApiProperty({ example: 'Nivel' })
   @IsInt({

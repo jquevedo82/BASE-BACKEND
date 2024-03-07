@@ -96,9 +96,8 @@ export class AuthService {
         username: dto.username,
 
         email: dto.email,
-        nombre: dto.nombre,
         password: hashedPassword,
-        denominacion: dto.denominacion,
+        denominacion: dto.Descri,
         isActivo: true,
         nivel: dto.nivel,
 
@@ -106,12 +105,11 @@ export class AuthService {
       };
 
       const insertQuery = `
-      INSERT INTO NeumenApi.dbo.usuarios (nombre,username,email,password,denominacion,nivel,isActivo)
-      VALUES (@nombre,@username,@email,@password,@denominacion,@nivel,@isActivo)
+      INSERT INTO NeumenApi.dbo.usuarios (username,email,password,denominacion,nivel,isActivo)
+      VALUES (@username,@email,@password,@denominacion,@nivel,@isActivo)
   `;
       const nuevo = await request
 
-        .input('nombre', user.nombre)
         .input('username', user.username)
         .input('email', user.email)
         .input('password', user.password)
@@ -200,7 +198,7 @@ export class AuthService {
         email: dto.email,
         nombre: dto.nombre,
         password: hashedPassword,
-        denominacion: dto.denominacion,
+        denominacion: dto.Descri,
         isActivo: true,
         nivel: dto.nivel,
 
@@ -300,7 +298,7 @@ export class AuthService {
         email: dto.email,
         nombre: dto.nombre,
         password: hashedPassword,
-        denominacion: dto.denominacion,
+        denominacion: dto.Descri,
         isActivo: true,
         nivel: dto.nivel,
 
@@ -398,7 +396,7 @@ export class AuthService {
         email: dto.email,
         nombre: dto.nombre,
         password: hashedPassword,
-        denominacion: dto.denominacion,
+        Descri: dto.Descri,
         isActivo: true,
         nivel: dto.nivel,
 
@@ -406,7 +404,7 @@ export class AuthService {
       };
 
       const insertQuery = `
-      INSERT INTO NeumenApi.dbo.usuarios (nombre,username,email,password,denominacion,nivel,isActivo)
+      INSERT INTO NeumenApi.dbo.usuarios (nombre,username,email,password,Descri,nivel,isActivo)
       VALUES (@nombre,@username,@email,@password,@denominacion,@nivel,@isActivo)
   `;
       const nuevo = await request
@@ -415,7 +413,7 @@ export class AuthService {
         .input('username', user.username)
         .input('email', user.email)
         .input('password', user.password)
-        .input('denominacion', user.denominacion)
+        .input('Descri', user.Descri)
         .input('nivel', user.nivel)
         .input('isActivo', user.isActivo)
         .query(insertQuery);
@@ -518,6 +516,7 @@ export class AuthService {
   //   }
   async login(dto: LoginUsuarioDto): Promise<any> {
     const { username, password } = dto;
+    
     if (username == undefined)
       throw new BadRequestException('Error en envio de datos');
     const whereClause = username ? ` where username = '${username}' or email ='${username}'` : '';
@@ -536,8 +535,9 @@ export class AuthService {
       // Devolver el conjunto de registros
       if (result.rowsAffected == 0)
         throw new UnauthorizedException('No existe el usuario2');
-      const pass = await hash(result.recordset[0].password, 10);
-      const passwordOK = await compare(password, pass);
+
+      const passwordOK = await compare(password, result.recordset[0].password);
+      console.log(password,result.recordset[0].password);
 
       if (!passwordOK) throw new UnauthorizedException('Contraseña Erronea');
 

@@ -1,41 +1,38 @@
-
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEmail, IsInt, IsString, MaxLength } from 'class-validator';
+import {
+  IsEmail,
+  IsInt,
+  IsOptional,
+  IsString,
+  MaxLength,
+} from 'class-validator';
 import { IsNotBlank } from '../../../decorador/is-not-blank.decorator';
 /* eslint-disable prettier/prettier */
 export class CreateUserDto {
-  @ApiProperty({ example: 'Nombre Completo del Usuario' })
-  @IsString()
-  @MaxLength(50, { message: 'Nombre longitud maxima de 50' })
-  nombre: string;
-
   @ApiProperty({ example: 'UserName' })
   @IsNotBlank({ message: 'El nombre de usuario no puede estar vacio' })
   @MaxLength(10, { message: 'Nombre de Usuario longitud maxima de 10' })
   username: string;
 
   @ApiProperty({ example: 'Correo Electronico' })
+  @IsOptional()
   @IsEmail()
-  email: string;
+  email?: string;
 
   @ApiProperty({ example: 'Contraseña o Password' })
   @IsNotBlank({ message: 'La contraseña no puede estar vacia' })
   password: string;
- 
-  @ApiProperty({ example: 'denominacion' })
+
+  @ApiProperty({ example: 'Descri' })
   @IsNotBlank({ message: 'La denominacion no puede estar vacia' })
-  denominacion: string;
+  Descri: string;
 
   @ApiProperty({ example: 'Nivel' })
-  @IsInt({
-    message: 'El nivel del usuario',
-  })
+  //@IsInt({
+  // message: 'El nivel del usuario',
+  //})
   nivel: number;
 
-
   @ApiProperty({ example: 'true' })
-  isActivo: boolean;
+  Estado: boolean;
 }
-
-
-

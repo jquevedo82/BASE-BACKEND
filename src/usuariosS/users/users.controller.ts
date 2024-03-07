@@ -64,12 +64,38 @@ export class UsersController {
     @Res() res,
   ): Promise<any> {
     const startTime = Date.now();
-    // console.log(dto);
+     console.log(dto);
     this.writeLog.writeLog(startTime, request, HttpStatus.OK, '');
     const data = await this.usersService.create(dto);
     return res.status(HttpStatus.OK).json({
       statusCode: HttpStatus.OK,
-      message: 'OK',
+      message: 'OK, Ingresado Con Exito!!',
+      data: data,
+    });
+  }
+  @Get('alta')
+  //@UseGuards(JwtAuthGuard)//bloquea todo si no trae un token bearer
+  //@RolDecorator(RolNombre.DEV) //indicamos que tipo usuario puede accesr a este acces point
+  //@UseGuards(JwtAuthGuard, RolesGuard) // autenticacion jwt y que sea el roll antes detallado
+  @ApiOperation({ summary: 'Consultar Listado de Usuarios del Sistemas para alta' })
+  @ApiOkResponse({ description: 'Listados de Usuarios', type: [User] })
+  @ApiForbiddenResponse({ description: 'Forbidden..' })
+  async findAlta(
+    @Req() request: Request,
+    @Query() filterQuery,
+    @Res() res,
+//  ): Promise<User[]> {
+  ): Promise<any> {
+    const startTime = Date.now();
+
+    const data = await this.usersService.findAlta(filterQuery);
+    const message = 'OK';
+
+    this.writeLog.writeLog(startTime, request, HttpStatus.OK, message);
+
+    return res.status(HttpStatus.OK).json({
+      statusCode: HttpStatus.OK,
+      message: message,
       data: data,
     });
   }
@@ -99,7 +125,6 @@ export class UsersController {
       data: data,
     });
   }
-
   @Get('name')
   //@UseGuards(JwtAuthGuard)//bloquea todo si no trae un token bearer
   //@RolDecorator(RolNombre.DEV) //indicamos que tipo usuario puede accesr a este acces point

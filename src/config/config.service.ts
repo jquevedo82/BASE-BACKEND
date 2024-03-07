@@ -29,7 +29,7 @@ class ConfigService {
       host: this.getValue('TUTORIAL_HOST'),
       port: parseInt(this.getValue('TUTORIAL_PORT')),
       username: this.getValue('TUTORIAL_USER'),
-      //password: this.getValue('TUTORIAL_PASSWORD'),
+      password: this.getValue('TUTORIAL_PASSWORD'),
       database: this.getValue('TUTORIAL_DATABASE'),
 
       entities: ['dist/**/*.entity.js'],
@@ -47,7 +47,7 @@ const configService = new ConfigService(process.env).ensureValues([
   'TUTORIAL_HOST',
   'TUTORIAL_PORT',
   'TUTORIAL_USER',
-  // 'TUTORIAL_PASSWORD',
+   'TUTORIAL_PASSWORD',
   'TUTORIAL_DATABASE',
 ]);
 

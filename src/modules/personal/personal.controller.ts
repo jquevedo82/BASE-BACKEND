@@ -43,8 +43,8 @@ export class PersonalController {
       data: data,
     });
   }
-
-  @Get('prueba')
+ // @UseGuards(JwtAuthGuard)
+  @Get('periodo-prueba')
   async findPeriodoPrueba(@Req() request: Request, @Query() filterQuery, @Res() res) {
 
     console.log(filterQuery,1);

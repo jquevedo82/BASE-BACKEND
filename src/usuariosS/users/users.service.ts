@@ -3,7 +3,7 @@ import {
   ConflictException,
   Injectable,
 } from '@nestjs/common';
-import { hashSync } from 'bcryptjs';
+import { hash, hashSync } from 'bcryptjs';
 import { Transaction } from 'mssql';
 import { MsSqlConnectService } from 'src/config/mssqlconnect.service';
 import { RolNombre } from '../roles/entities/rol.enum';
@@ -13,26 +13,25 @@ import { User } from './entities/user.entity';
 
 @Injectable()
 export class UsersService {
-  constructor(
-    private readonly sql: MsSqlConnectService,
-  ) {}
+  constructor(private readonly sql: MsSqlConnectService) {}
 
   async create(dto: CreateUserDto): Promise<any> {
     const { username, email } = dto;
-
+    var w2 ='';
+    if(email)
+       w2 = ` or email = '${email}' `
     const whereClause =
-      username && email
-        ? ` where username = '${username}' and email = '${email}'`
+      username
+        ? ` where username = '${username}'  ${w2}`
         : '';
     var query = `
         SELECT *
-        FROM NeumenApi.dbo.usuarios ${whereClause}
+        FROM NeumenApi.dbo.UsuariosN ${whereClause}
     `;
     var result;
-
     // Obtener conexión del pool
     const pool = await this.sql.getConnection();
-
+    console.log(whereClause);
     const transaction = new Transaction(pool);
     try {
       await transaction.begin();
@@ -41,66 +40,64 @@ export class UsersService {
       const request = transaction.request();
       // Ejecutar la consulta
       result = await request.query(query);
+      
+      console.log(query);
+      if (result.rowsAffected >= 1)
+        throw new BadRequestException('El usuario que ingresaste ya existe, Verifica Username y Email');
 
-      if (result.recordset.length == 1)
-        throw new BadRequestException('El usuario que ingresaste ya existe');
+  //     query = `
+  //     SELECT *
+  //     FROM NeumenApi.dbo.roles
+  //     WHERE rolNombre = @rolNombre 
+  // `;
+  //     // Ejecutar la consulta con un parámetro
+  //     result = await request.input('rolNombre', RolNombre.USER).query(query);
 
-      query = `
-      SELECT *
-      FROM NeumenApi.dbo.roles
-      WHERE rolNombre = @rolNombre 
-  `;
-      // Ejecutar la consulta con un parámetro
-      result = await request.input('rolNombre', RolNombre.USER).query(query);
+  //     if (result.rowsAffected[0] == 0) {
+  //       //await transaction.rollback();
+  //       throw new BadRequestException('los roles no han sido creados');
+  //     }
 
-      if (result.rowsAffected[0] == 0) {
-        //await transaction.rollback();
-        throw new BadRequestException('los roles no han sido creados');
-      }
-
-      const hashedPassword = await hashSync(dto.password, 10);
+      const hashedPassword = await hash(dto.password, 10);
       const user = {
         // Asegúrate de asignar las propiedades correctas según tu modelo de usuario
         username: dto.username,
 
         email: dto.email,
-        nombre: dto.nombre,
         password: hashedPassword,
-        denominacion: dto.denominacion,
+        Descri: dto.Descri,
         isActivo: true,
         nivel: dto.nivel,
-
         // ... otras propiedades del usuario
       };
 
       const insertQuery = `
-      INSERT INTO NeumenApi.dbo.usuarios (nombre,username,email,password,denominacion,nivel,isActivo)
-      VALUES (@nombre,@username,@email,@password,@denominacion,@nivel,@isActivo)
+      INSERT INTO NeumenApi.dbo.UsuariosN (username,email,password,Descri,Nivel,Estado)
+      VALUES (UPPER(@username),@email,@password,UPPER(@Descri),@nivel,@isActivo)
   `;
       const nuevo = await request
 
-        .input('nombre', user.nombre)
         .input('username', user.username)
         .input('email', user.email)
         .input('password', user.password)
-        .input('denominacion', user.denominacion)
-        .input('nivel', user.nivel)
+        .input('Descri', user.Descri)
+        .input('nivel', '')
         .input('isActivo', user.isActivo)
         .query(insertQuery);
       const resultx = await request.query(
-        'SELECT MAX(id) AS id FROM NeumenApi.dbo.usuarios',
+        'SELECT MAX(id) AS id FROM NeumenApi.dbo.UsuariosN',
       );
       const ID_Usuario = resultx.recordset[0].id;
 
-      for (const idRol of result.recordset) {
-        const request = transaction.request();
-        const insertQuery2 = `INSERT INTO NeumenApi.dbo.roles_usuarios (id_Rol, id_Usuario)
-        VALUES (@id_Rol, @id_Usuario)  `;
-        await request
-          .input('id_Rol', idRol.id)
-          .input('id_Usuario', ID_Usuario)
-          .query(insertQuery2);
-      }
+      // for (const idRol of result.recordset) {
+      //   const request = transaction.request();
+      //   const insertQuery2 = `INSERT INTO NeumenApi.dbo.roles_usuarios (id_Rol, id_Usuario)
+      //   VALUES (@id_Rol, @id_Usuario)  `;
+      //   await request
+      //     .input('id_Rol', idRol.id)
+      //     .input('id_Usuario', ID_Usuario)
+      //     .query(insertQuery2);
+      // }
 
       await transaction.commit();
       return nuevo;
@@ -113,19 +110,26 @@ export class UsersService {
     }
   }
 
-  async findAll(filterQuery): Promise<any> {//Promise<User[]> {
-    const { limit } = filterQuery;
+  async findAll(filterQuery): Promise<any> {
+    //Promise<User[]> {
+    const { limit, selects, dato } = filterQuery;
 
     const topClause = limit ? `TOP ${limit}` : '';
+    const selectsT = selects ? ` ${selects} , ` : '';
     const query = `
-    SELECT ${topClause} *
-    FROM NeumenApi.dbo.usuarios 
+    SELECT ${topClause} ${selectsT} Estado,id,
+    case when Estado = 1 then
+    'Activo'
+    else
+    'Desactivo'
+    end EstadoH
+    FROM NeumenApi.dbo.UsuariosN where Descri like UPPER('%${dato}%') or username like UPPER('%${dato}%') 
 `;
-const queryCount = `
+    const queryCount = `
 SELECT count (*) as total
-FROM NeumenApi.dbo.usuarios 
+FROM NeumenApi.dbo.UsuariosN 
 `;
-
+    console.log(query);
     // Obtener conexión del pool
     const pool = await this.sql.getConnection();
 
@@ -134,14 +138,45 @@ FROM NeumenApi.dbo.usuarios
       const result = await pool.request().query(query);
       if (!result.recordset.length) return [];
       // Devolver el conjunto de registros
-      //return result.recordset;
-      const result2 = await pool.request().query(queryCount);
-      return {
-        total: result2.recordset[0].total,
-        limit: result.rowsAffected[0],
-        results: result.recordset,
-      };
-      
+      // //return result.recordset;
+      // const result2 = await pool.request().query(queryCount);
+      // if (!result2.recordset[0]) return null;
+      return await result.recordset;
+      // return {
+      //   total: result2.recordset[0].total,
+      //   limit: result.rowsAffected[0],
+      //   results: result.recordset,
+      // };
+    } finally {
+      // Importante: liberar la conexión de nuevo al pool en la cláusula finally
+      pool.close();
+    }
+    /////////////////////////////
+  }
+
+  async findAlta(filterQuery): Promise<any> {
+    //Promise<User[]> {
+    const {  selects } = filterQuery;
+
+    const selectsT = selects ? ` ${selects}  ` : '';
+    const query = `
+    SELECT ${selectsT} , '0' as Estado, NroDni
+    FROM Vales.dbo.Sueldos_Personal SP
+    LEFT JOIN NeumenApi.dbo.UsuariosN UN ON SP.NroDni = UN.username
+    WHERE UN.username IS NULL
+    AND SP.Estado = 1 AND SP.NroDni <> '' AND NroLegaVal <> 490  
+`;
+
+    console.log(query);
+    // Obtener conexión del pool
+    const pool = await this.sql.getConnection();
+
+    try {
+      // Ejecutar la consulta
+      const result = await pool.request().query(query);
+      if (!result.recordset.length) return [];
+
+      return await result.recordset;
     } finally {
       // Importante: liberar la conexión de nuevo al pool en la cláusula finally
       pool.close();
@@ -179,10 +214,11 @@ FROM NeumenApi.dbo.usuarios
 
   async findById(id: number): Promise<User> {
     ///////////////////////
+    console.log(id);
     const whereClause = id ? ` WHERE id = '${id}' ` : '';
     const query = `
     SELECT *
-    FROM NeumenApi.dbo.usuarios  ${whereClause}
+    FROM NeumenApi.dbo.UsuariosN  ${whereClause}
 `;
 
     // Obtener conexión del pool
@@ -214,7 +250,7 @@ FROM NeumenApi.dbo.usuarios
     const whereClause = codigoId ? ` WHERE id = '${codigoId}' ` : '';
     const query = `
       SELECT *
-      FROM NeumenApi.dbo.usuarios  ${whereClause}
+      FROM NeumenApi.dbo.UsuariosN  ${whereClause}
   `;
 
     // Obtener conexión del pool
@@ -230,8 +266,12 @@ FROM NeumenApi.dbo.usuarios
       if (!toUpdate) throw new ConflictException('User no encontrado');
 
       const updated = Object.assign(toUpdate, updateUsuarioDto);
-
-      let updateQuery = 'UPDATE NeumenApi.dbo.usuarios SET ';
+      console.log(updateUsuarioDto);
+      if (updateUsuarioDto.hasOwnProperty('password')) {
+        const hashedPassword = await hash(updateUsuarioDto.password, 10);
+        updateUsuarioDto.password = hashedPassword;
+      }
+      let updateQuery = 'UPDATE NeumenApi.dbo.UsuariosN SET ';
       let isFirst = true;
       for (const key in updateUsuarioDto) {
         if (!isFirst) {
@@ -240,9 +280,10 @@ FROM NeumenApi.dbo.usuarios
         updateQuery += `${key} = @${key}`;
         isFirst = false;
       }
+      
       updateQuery += ' WHERE id = @id';
 
-      //console.log(updateQuery);
+      console.log(updateQuery);
       const request2 = pool.request();
       for (const key in updateUsuarioDto) {
         request2.input(key, updateUsuarioDto[key]);

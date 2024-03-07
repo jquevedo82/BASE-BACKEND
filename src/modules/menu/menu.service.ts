@@ -22,9 +22,9 @@ export class MenuService {
     if (!id) throw new BadRequestException("Consulta mal Planteada 1"); 
     const whereClause =` where IdUsua = '${id}' and Estado ='1' `;
     const query = `
-    select * from NeumenApi.dbo.lvw_Menu 
+    select * from NeumenApi.dbo.Menu 
     where IdMenu in( SELECT IdMenu
-        FROM NeumenApi.dbo.lvw_MenuUsuario  ${whereClause} )
+        FROM NeumenApi.dbo.MenuUsuario  ${whereClause} )
     `;
     
 

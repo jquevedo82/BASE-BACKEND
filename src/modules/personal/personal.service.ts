@@ -61,11 +61,11 @@ export class PersonalService {
     let { dato, limit, order, fechad, fechah } = filterQuery;
     let where2: string, selects: string, where: string;
 
-    console.log(filterQuery);
+    //console.log(filterQuery);
     // console.log(dato);
     // console.log(fechah);
 
-    selects = `Apellido, Nombres, NroLegaBej, NroLegaVal, NroCui, NroDni,IdSucu,Autorizo, FecIng,FecPrue,
+    selects = `Apellido, Nombres, NroLegaBej, NroLegaVal, NroCui, NroDni,IdSucu,Autorizo, FecIng,FecPrue,Estado,
           a.Nombres + ' ' + a.Apellido AS NombreCompleto,
         (select b.Nombres + ' ' + b.Apellido from Vales.dbo.Sueldos_Personal b where a.Autorizo=b.NroLegaVal) as N2,
         (select c.Descri from Vales.dbo.Sueldos_Sucursales c where a.IdSucu=c.IdSucu) as S2,     CASE 
@@ -101,7 +101,7 @@ export class PersonalService {
     WHERE ( ${where2} ) AND (${where})
     ORDER BY ${order} ASC;
   `;
-    console.log(sqlQuery, 11);
+   // console.log(sqlQuery, 11);
     const pool = await this.sql.getConnection();
     try {
       const request = pool.request();
