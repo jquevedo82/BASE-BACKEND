@@ -22,7 +22,7 @@ import { MsSqlConnectService } from 'src/config/mssqlconnect.service';
       useFactory: async (configService: ConfigService) => ({
         secret: configService.get(JWT_SECRET),
         signOptions: {
-          expiresIn: 60,
+          expiresIn: 3600,
         },
       }),
       inject: [ConfigService],

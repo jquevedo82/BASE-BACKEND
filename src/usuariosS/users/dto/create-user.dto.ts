@@ -5,7 +5,9 @@ import {
   IsOptional,
   IsString,
   MaxLength,
+  Validate,
 } from 'class-validator';
+import { CustomEmailConstraint } from 'src/decorador/CustomEmailConstraint';
 import { IsNotBlank } from '../../../decorador/is-not-blank.decorator';
 /* eslint-disable prettier/prettier */
 export class CreateUserDto {
@@ -16,7 +18,8 @@ export class CreateUserDto {
 
   @ApiProperty({ example: 'Correo Electronico' })
   @IsOptional()
-  @IsEmail()
+  @IsOptional()
+  @Validate(CustomEmailConstraint)
   email?: string;
 
   @ApiProperty({ example: 'Contraseña o Password' })

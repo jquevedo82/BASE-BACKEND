@@ -64,7 +64,7 @@ export class UsersController {
     @Res() res,
   ): Promise<any> {
     const startTime = Date.now();
-     console.log(dto);
+    // console.log(dto);
     this.writeLog.writeLog(startTime, request, HttpStatus.OK, '');
     const data = await this.usersService.create(dto);
     return res.status(HttpStatus.OK).json({
@@ -87,7 +87,7 @@ export class UsersController {
 //  ): Promise<User[]> {
   ): Promise<any> {
     const startTime = Date.now();
-
+//console.log(filterQuery);
     const data = await this.usersService.findAlta(filterQuery);
     const message = 'OK';
 

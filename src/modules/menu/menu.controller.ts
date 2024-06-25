@@ -25,14 +25,60 @@ export class MenuController {
     private readonly writeLog: WriteLogService, //@Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
   ) {}
 
-  @Post()
-  create(@Body() createMenuDto: CreateMenuDto) {
-    return this.menuService.create(createMenuDto);
+  @UseGuards(JwtAuthGuard)
+  @Post('padre')
+  async create(@Req() request: Request, @Body() datos, @Res() res) {
+    const startTime = Date.now();
+
+    const data = await this.menuService.create(datos);
+    const message = 'OK';
+
+    this.writeLog.writeLog(startTime, request, HttpStatus.OK, message);
+
+    return res.status(HttpStatus.OK).json({
+      statusCode: HttpStatus.OK,
+      message: message,
+      data: data,
+    });
   }
 
+  @UseGuards(JwtAuthGuard)
   @Get('padres')
-  findAll() {
-    return this.menuService.findAll();
+  async findAll(@Req() request: Request, @Query() filterQuery, @Res() res) {
+    const startTime = Date.now();
+
+    const data = await this.menuService.findAll();
+    const message = 'OK';
+
+    this.writeLog.writeLog(startTime, request, HttpStatus.OK, message);
+
+    return res.status(HttpStatus.OK).json({
+      statusCode: HttpStatus.OK,
+      message: message,
+      data: data,
+    });
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('hijos/:id')
+  async findAllhijos(
+    @Req() request: Request,
+    @Param('id') id: number,
+    @Query() filterQuery,
+    @Res() res,
+  ) {
+    const startTime = Date.now();
+
+    const data = await this.menuService.findAllhijos(id);
+    const message = 'OK';
+
+    this.writeLog.writeLog(startTime, request, HttpStatus.OK, message);
+
+    return res.status(HttpStatus.OK).json({
+      statusCode: HttpStatus.OK,
+      message: message,
+      data: data,
+    });
   }
   @UseGuards(JwtAuthGuard)
   @Get()
@@ -55,13 +101,13 @@ export class MenuController {
     });
   }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateMenuDto: UpdateMenuDto) {
-    return this.menuService.update(+id, updateMenuDto);
+  @Patch('padre/:id')
+  async update(@Param('id') id: number, @Body() datos: any) {
+    return await this.menuService.update(id, datos);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.menuService.remove(+id);
+  async remove(@Param('id') id: number) {
+    return await this.menuService.remove(id);
   }
 }
